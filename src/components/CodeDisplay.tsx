@@ -23,10 +23,6 @@ const CodeDisplay: React.FC<CodeDisplayProps> = ({ elements, blockName }) => {
       () => {
         setToastMessage(`${type}コードがコピーされました`);
         setShowToast(true);
-      },
-      (err) => {
-        setToastMessage('コピーに失敗しました');
-        setShowToast(true);
       }
     );
   };

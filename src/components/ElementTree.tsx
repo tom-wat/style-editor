@@ -6,14 +6,12 @@ interface ElementTreeProps {
   elements: ElementType[];
   selectedIndex: number;
   onSelectElement: (id: number) => void;
-  onToggleExpanded: (id: number) => void;
 }
 
 const ElementTree: React.FC<ElementTreeProps> = ({
   elements,
   selectedIndex,
-  onSelectElement,
-  onToggleExpanded
+  onSelectElement
 }) => {
   // 要素がレンダリング階層内で選択されているか判定する
   const isElementSelected = (element: ElementType): boolean => {
@@ -42,7 +40,7 @@ const ElementTree: React.FC<ElementTreeProps> = ({
   };
 
   // 要素をレンダリングする関数
-  const renderElements = (elements: ElementType[], level = 0, isChildOfFlexRow = false) => {
+  const renderElements = (elements: ElementType[], level = 0) => {
     return elements.map((element) => {
       const isSelected = isElementSelected(element);
       
@@ -112,7 +110,7 @@ const ElementTree: React.FC<ElementTreeProps> = ({
             // それ以外の場合はデフォルトの青色
             outlineColor = '#add8e6';
           }
-        } catch (e) {
+        } catch {
           // エラーが発生した場合はデフォルトの青色
           outlineColor = '#add8e6';
         }
@@ -134,13 +132,13 @@ const ElementTree: React.FC<ElementTreeProps> = ({
       const tagName = element.htmlTagName && !element.hideHtmlTag ? element.htmlTagName : 'div';
       
       // 動的にタグをレンダリングするために、React.Elementを作成する
-      const ElementTag = tagName as keyof JSX.IntrinsicElements;
+      const ElementTag = tagName as React.ElementType;
       
       return (
         <ElementTag 
           key={element.id}
           style={elementStyle}
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent<HTMLElement>) => {
             e.stopPropagation();
             onSelectElement(element.id);
           }}
@@ -149,8 +147,7 @@ const ElementTree: React.FC<ElementTreeProps> = ({
           {element.text && element.text.length > 0 ? element.text : null}
           
           {element.children && element.children.length > 0 && 
-            renderElements(element.children, level + 1, 
-              elementStyle.display === 'flex' && elementStyle.flexDirection === 'row'
+            renderElements(element.children, level + 1
             )
           }
         </ElementTag>

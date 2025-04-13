@@ -1,9 +1,6 @@
 // src/components/StyleEditor.tsx
-import React, { useState, useEffect } from 'react';
-import { fetchStylesFromMCPServer, saveStylesToMCPServer, fetchStyleTemplates } from '../utils/mcp/mcpService';
-import { getEndpointUrl, MCP_CONFIG } from '../utils/mcp/mcpConfig';
-
-import { ElementType, countVisibleElements } from '../utils/bemUtils';
+import React, { useState } from 'react';
+import { ElementType } from '../utils/bemUtils';
 import Preview from './Preview';
 import Toast from './Toast';
 import PropertyEditor from './PropertyEditor';
@@ -62,130 +59,15 @@ const StyleEditor: React.FC = () => {
   // 現在選択されている要素のインデックス
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   
-  // データ読み込み状態
-  const [loading, setLoading] = useState<boolean>(false);
-  
   // トースト通知の状態
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({ 
     show: false, 
     message: '', 
     type: 'success' 
   });
-  
-  // テンプレート一覧
-  const [templates, setTemplates] = useState<Array<{ id: string; name: string }>>([]);
-  
-  // 選択されたテンプレートID
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
   // 選択された要素を取得
   const selectedElement = getSelectedElement(elements, selectedIndex) || elements[0];
-  
-  // MCPサーバーからデータをロードする
-  const loadDataFromMCPServer = async () => {
-    try {
-      setLoading(true);
-      const url = getEndpointUrl(MCP_CONFIG.ENDPOINTS.GET_STYLES);
-      const data = await fetchStylesFromMCPServer(url);
-      
-      if (data && data.elements && data.elements.length > 0) {
-        setBlockName(data.blockName || 'component');
-        setElements(data.elements);
-        setToast({ 
-          show: true, 
-          message: 'スタイルデータが正常に読み込まれました', 
-          type: 'success' 
-        });
-      }
-    } catch (error) {
-      console.error('データ読み込みエラー:', error);
-      setToast({ 
-        show: true, 
-        message: `データ読み込みに失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`, 
-        type: 'error' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // MCPサーバーにデータを保存する
-  const saveDataToMCPServer = async () => {
-    try {
-      setLoading(true);
-      const url = getEndpointUrl(MCP_CONFIG.ENDPOINTS.SAVE_STYLES);
-      const result = await saveStylesToMCPServer(url, blockName, elements);
-      
-      if (result.success) {
-        setToast({ 
-          show: true, 
-          message: result.message, 
-          type: 'success' 
-        });
-      } else {
-        setToast({ 
-          show: true, 
-          message: result.message, 
-          type: 'error' 
-        });
-      }
-    } catch (error) {
-      console.error('データ保存エラー:', error);
-      setToast({ 
-        show: true, 
-        message: `データ保存に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`, 
-        type: 'error' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // テンプレート一覧を取得する
-  const loadTemplates = async () => {
-    try {
-      const url = getEndpointUrl(MCP_CONFIG.ENDPOINTS.GET_TEMPLATES);
-      const templateList = await fetchStyleTemplates(url);
-      setTemplates(templateList);
-    } catch (error) {
-      console.error('テンプレート一覧取得エラー:', error);
-    }
-  };
-  
-  // 特定のテンプレートを読み込む
-  const loadTemplate = async (templateId: string) => {
-    if (!templateId) return;
-    
-    try {
-      setLoading(true);
-      const url = getEndpointUrl(MCP_CONFIG.ENDPOINTS.GET_TEMPLATE, { id: templateId });
-      const data = await fetchStylesFromMCPServer(url);
-      
-      if (data && data.elements && data.elements.length > 0) {
-        setBlockName(data.blockName || 'component');
-        setElements(data.elements);
-        setToast({ 
-          show: true, 
-          message: 'テンプレートが正常に読み込まれました', 
-          type: 'success' 
-        });
-      }
-    } catch (error) {
-      console.error('テンプレート読み込みエラー:', error);
-      setToast({ 
-        show: true, 
-        message: `テンプレート読み込みに失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`, 
-        type: 'error' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // コンポーネントマウント時にテンプレート一覧を取得
-  useEffect(() => {
-    loadTemplates();
-  }, []);
 
   // 要素を追加する関数
   const handleAddElement = (position: 'before' | 'after' | 'child', parentId: number | null = null) => {
@@ -346,10 +228,14 @@ const StyleEditor: React.FC = () => {
     const updateElementsRecursively = (elements: ElementType[], targetId: number, name: string): ElementType[] => {
       return elements.map(element => {
         if (element.id === targetId && element.htmlAttributes) {
-          const { [name]: removed, ...restAttributes } = element.htmlAttributes;
+          // 新しい属性オブジェクトを作成
+          const newAttributes = { ...element.htmlAttributes };
+          // 指定された属性を削除
+          delete newAttributes[name];
+          
           return { 
             ...element, 
-            htmlAttributes: restAttributes
+            htmlAttributes: newAttributes
           };
         } 
         if (element.children && element.children.length > 0) {
@@ -470,57 +356,7 @@ const StyleEditor: React.FC = () => {
       <div className="sticky top-0 bg-white z-10 py-2">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">スタイルエディタ</h1>
-          
-          <div className="flex gap-2">
-            <button 
-              onClick={loadDataFromMCPServer}
-              disabled={loading}
-              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-            >
-              {loading ? 'ロード中...' : 'MCPからロード'}
-            </button>
-            
-            <button 
-              onClick={saveDataToMCPServer}
-              disabled={loading}
-              className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400"
-            >
-              {loading ? '保存中...' : 'MCPに保存'}
-            </button>
-            
-            {templates.length > 0 && (
-              <div className="flex items-center gap-2">
-                <select
-                  value={selectedTemplateId}
-                  onChange={(e) => setSelectedTemplateId(e.target.value)}
-                  className="border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">テンプレートを選択</option>
-                  {templates.map(template => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                    </option>
-                  ))}
-                </select>
-                
-                <button
-                  onClick={() => loadTemplate(selectedTemplateId)}
-                  disabled={!selectedTemplateId || loading}
-                  className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:bg-gray-400 text-sm"
-                >
-                  適用
-                </button>
-              </div>
-            )}
-          </div>
         </div>
-        
-        {/* 読み込み中インジケーター */}
-        {loading && (
-          <div className="w-full h-1 bg-blue-100">
-            <div className="h-1 bg-blue-500 animate-pulse"></div>
-          </div>
-        )}
       </div>
       
       <div className="flex flex-col md:flex-row gap-6 min-h-[calc(100vh-4rem)]">

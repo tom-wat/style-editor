@@ -5,20 +5,27 @@ import { ElementType, generateBEMClassName } from '../utils/bemUtils';
 interface PropertyEditorProps {
   blockName: string;
   selectedElement: ElementType;
+  allElements: ElementType[];
   onUpdateBlockName: (name: string) => void;
   onUpdateElementName: (name: string) => void;
   onUpdateModifiers: (modifierStr: string) => void;
   onUpdateText: (text: string) => void;
   onUpdateProperty: (property: string, value: string) => void;
   onTogglePropertyEnabled?: (property: string, enabled: boolean) => void;
-  onToggleElementName?: (hide: boolean) => void;
-  onToggleModifiers?: (hide: boolean) => void;
+  onToggleElementName?: (show: boolean) => void;
+  onToggleModifiers?: (show: boolean) => void;
+  onUpdateHtmlTagName?: (tagName: string) => void;
+  onUpdateHtmlAttribute?: (name: string, value: string) => void;
+  onUpdateHtmlAttributeName?: (oldName: string, newName: string) => void;
+  onDeleteHtmlAttribute?: (name: string) => void;
+  onToggleHtmlTag?: (show: boolean) => void;
+  onUpdateElementBlockName?: (blockName: string) => void;
+  onToggleUseParentBlock?: (useParent: boolean) => void;
 }
 
 const PropertyEditor: React.FC<PropertyEditorProps> = ({
   blockName,
   selectedElement,
-  allElements,
   onUpdateBlockName,
   onUpdateElementName,
   onUpdateModifiers,
@@ -85,10 +92,14 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   const handleTagNameBlur = () => {
     if (!tempHtmlTagName.trim()) {
       setTempHtmlTagName('div');
-      onUpdateHtmlTagName && onUpdateHtmlTagName('div');
+      if (onUpdateHtmlTagName) {
+        onUpdateHtmlTagName('div');
+      }
     } else {
       // ここで初めて更新する
-      onUpdateHtmlTagName && onUpdateHtmlTagName(tempHtmlTagName);
+      if (onUpdateHtmlTagName) {
+        onUpdateHtmlTagName(tempHtmlTagName);
+      }
     }
   };
 
@@ -101,8 +112,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   const handleAttributeNameBlur = () => {
     if (editingAttributeName) {
       const { originalName, newName } = editingAttributeName;
-      if (newName.trim() && newName !== originalName) {
-        onUpdateHtmlAttributeName && onUpdateHtmlAttributeName(originalName, newName);
+      if (newName.trim() && newName !== originalName && onUpdateHtmlAttributeName) {
+        onUpdateHtmlAttributeName(originalName, newName);
       }
       setEditingAttributeName(null);
     }
@@ -210,8 +221,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                     </div>
                     <button
                       onClick={() => {
-                        if (newAttributeName && newAttributeValue) {
-                          onUpdateHtmlAttribute && onUpdateHtmlAttribute(newAttributeName, newAttributeValue);
+                        if (newAttributeName && newAttributeValue && onUpdateHtmlAttribute) {
+                          onUpdateHtmlAttribute(newAttributeName, newAttributeValue);
                           setNewAttributeName('');
                           setNewAttributeValue('');
                         }
@@ -341,10 +352,10 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
               
               {/* 生成されるクラス名表示 */}
               <div className="mb-2">
-                <label className="block text-sm font-medium mb-1">生成されるクラス名：</label>
-                <div className="text-sm bg-gray-100 p-2 rounded break-words">
-                  {generateBEMClassName(selectedElement, blockName, allElements)}
-                </div>
+              <label className="block text-sm font-medium mb-1">生成されるクラス名：</label>
+              <div className="text-sm bg-gray-100 p-2 rounded break-words">
+              {generateBEMClassName(selectedElement, blockName)}
+              </div>
               </div>
             </div>
           )}

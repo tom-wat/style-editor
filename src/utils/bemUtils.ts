@@ -13,11 +13,18 @@ export interface ElementType {
   children: ElementType[];
   parentId: number | null;
   expanded: boolean;
+  htmlTagName?: string; // HTMLタグ名
+  htmlAttributes?: Record<string, string>; // HTML属性
+  hideHtmlTag?: boolean; // HTMLタグ設定を非表示にするフラグ
+  blockName?: string; // 要素固有のブロック名
+  useParentBlock?: boolean; // 親のブロック名を使用するかどうか
 }
 
 // BEMクラス名を生成する関数
 export const generateBEMClassName = (element: ElementType, blockName: string): string => {
-  let className = blockName;
+  // 要素固有のブロック名があれば、それを使用
+  const currentBlockName = element.blockName && !element.useParentBlock ? element.blockName : blockName;
+  let className = currentBlockName;
   
   // チェックボックスがチェックされている場合に要素名を追加しない
   if (element.elementName && !element.hideElementName) {
@@ -38,14 +45,25 @@ export const generateHtmlCode = (elements: ElementType[], blockName: string): st
   const generateHtml = (elements: ElementType[], indent = '') => {
     return elements.map(element => {
       const className = generateBEMClassName(element, blockName);
-      let html = `${indent}<div class="${className}">${element.text}`;
+      // HTMLタグ名が設定されており、かつ非表示フラグがfalseの場合に使用する
+      const tagName = element.htmlTagName && !element.hideHtmlTag ? element.htmlTagName : 'div';
+      
+      // HTML属性を構築
+      let attributesStr = ` class="${className}"`;
+      if (element.htmlAttributes && !element.hideHtmlTag) {
+        Object.entries(element.htmlAttributes).forEach(([name, value]) => {
+          attributesStr += ` ${name}="${value}"`;
+        });
+      }
+      
+      let html = `${indent}<${tagName}${attributesStr}>${element.text}`;
       
       if (element.children && element.children.length > 0) {
         html += '\n';
         html += generateHtml(element.children, indent + '  ');
-        html += `\n${indent}</div>`;
+        html += `\n${indent}</${tagName}>`;
       } else {
-        html += '</div>';
+        html += `</${tagName}>`;
       }
       
       return html;
@@ -74,10 +92,10 @@ export const generateCssCode = (elements: ElementType[], blockName: string): str
         })
         .join('\n');
       
-      // ベースクラスのCSS
+      // ベースクラスのCSS（HTMLタグを含めない）
       css += `.${className} {\n${cssRules}\n}`;
       
-      // モディファイアごとのCSS
+      // モディファイアごとのCSS（HTMLタグを含めない）
       if (element.modifiers && element.modifiers.length > 0 && !element.hideModifiers) {
         element.modifiers.forEach(modifier => {
           const modifierClass = `${className}--${modifier}`;

@@ -40,7 +40,7 @@ const ElementTree: React.FC<ElementTreeProps> = ({
   };
 
   // 要素をレンダリングする関数
-  const renderElements = (elements: ElementType[], level = 0) => {
+  const renderElements = (elements: ElementType[], level = 0): React.ReactNode[] => {
     return elements.map((element) => {
       const isSelected = isElementSelected(element);
       
@@ -131,26 +131,25 @@ const ElementTree: React.FC<ElementTreeProps> = ({
       // 実際のHTMLタグに基づいて要素を動的に作成
       const tagName = element.htmlTagName && !element.hideHtmlTag ? element.htmlTagName : 'div';
       
-      // 動的にタグをレンダリングするために、React.Elementを作成する
-      const ElementTag = tagName as keyof JSX.IntrinsicElements;
+      // HTML属性を追加
+      const htmlAttributes = element.htmlAttributes && !element.hideHtmlTag ? element.htmlAttributes : {};
       
-      return (
-        <ElementTag 
-          key={element.id}
-          style={elementStyle}
-          onClick={(e: React.MouseEvent<HTMLElement>) => {
+      // 動的にタグ名を使用して要素をレンダリングする
+      return React.createElement(
+        tagName,
+        {
+          key: element.id,
+          style: elementStyle,
+          onClick: (e: React.MouseEvent<HTMLElement>) => {
             e.stopPropagation();
             onSelectElement(element.id);
-          }}
-          className={elementClassName}
-        >
-          {element.text && element.text.length > 0 ? element.text : null}
-          
-          {element.children && element.children.length > 0 && 
-            renderElements(element.children, level + 1
-            )
-          }
-        </ElementTag>
+          },
+          className: elementClassName,
+          ...htmlAttributes // HTML属性を展開
+        },
+        element.text && element.text.length > 0 ? element.text : null,
+        element.children && element.children.length > 0 ? 
+          renderElements(element.children, level + 1) : null
       );
     });
   };

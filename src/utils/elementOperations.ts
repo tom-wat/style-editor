@@ -187,7 +187,7 @@ export const togglePropertyEnabled = (elements: ElementType[], targetId: number,
       // 有効にする場合は配列からプロパティを削除
       // 無効にする場合は配列にプロパティを追加（重複がなければ）
       let updatedDisabledProperties: string[];
-      let updatedProperties = { ...element.properties };
+      const updatedProperties = { ...element.properties };
 
       if (enabled) {
         // プロパティを有効にする

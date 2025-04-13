@@ -134,6 +134,26 @@ const ElementTree: React.FC<ElementTreeProps> = ({
       // HTML属性を追加
       const htmlAttributes = element.htmlAttributes && !element.hideHtmlTag ? element.htmlAttributes : {};
       
+      // void要素（自己終了要素）かどうかチェック
+      const voidElements = [
+        'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 
+        'meta', 'param', 'source', 'track', 'wbr'
+      ];
+      const isVoidElement = voidElements.includes(tagName);
+      
+      // void要素の場合は子要素を持てない
+      const children = isVoidElement ? null : [
+        element.text && element.text.length > 0 ? element.text : null,
+        element.children && element.children.length > 0 ? 
+          renderElements(element.children, level + 1) : null
+      ].filter(Boolean); // nullやundefinedを除去
+
+      // テキストがある場合、void要素でなければテキストを表示
+      // void要素の場合は、alt属性にテキストを設定する（imgタグ用）
+      if (isVoidElement && element.text && tagName === 'img' && !htmlAttributes.alt) {
+        htmlAttributes.alt = element.text;
+      }
+      
       // 動的にタグ名を使用して要素をレンダリングする
       return React.createElement(
         tagName,
@@ -147,9 +167,9 @@ const ElementTree: React.FC<ElementTreeProps> = ({
           className: elementClassName,
           ...htmlAttributes // HTML属性を展開
         },
-        element.text && element.text.length > 0 ? element.text : null,
-        element.children && element.children.length > 0 ? 
-          renderElements(element.children, level + 1) : null
+        // void要素の場合は子要素を持たない
+        ...(isVoidElement ? [] : [element.text || '', ...(element.children && element.children.length > 0 ? 
+          renderElements(element.children, level + 1) : [])])
       );
     });
   };

@@ -353,7 +353,7 @@ const StyleEditor: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full min-h-screen">
-      <div className="sticky top-0 bg-white z-10 py-2">
+      <div className="bg-white z-10 py-2">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">スタイルエディタ</h1>
         </div>

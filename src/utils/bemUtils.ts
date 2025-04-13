@@ -42,11 +42,18 @@ export const generateBEMClassName = (element: ElementType, blockName: string): s
 
 // HTMLコードを生成する関数
 export const generateHtmlCode = (elements: ElementType[], blockName: string): string => {
+  // void要素（自己終了要素）のリスト
+  const voidElements = [
+    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 
+    'meta', 'param', 'source', 'track', 'wbr'
+  ];
+
   const generateHtml = (elements: ElementType[], indent = '') => {
     return elements.map(element => {
       const className = generateBEMClassName(element, blockName);
       // HTMLタグ名が設定されており、かつ非表示フラグがfalseの場合に使用する
       const tagName = element.htmlTagName && !element.hideHtmlTag ? element.htmlTagName : 'div';
+      const isVoidElement = voidElements.includes(tagName);
       
       // HTML属性を構築
       let attributesStr = ` class="${className}"`;
@@ -54,6 +61,16 @@ export const generateHtmlCode = (elements: ElementType[], blockName: string): st
         Object.entries(element.htmlAttributes).forEach(([name, value]) => {
           attributesStr += ` ${name}="${value}"`;
         });
+      }
+      
+      // void要素の場合は、テキストをalt属性に追加（imgタグ用）
+      if (isVoidElement && element.text && tagName === 'img' && !attributesStr.includes('alt=')) {
+        attributesStr += ` alt="${element.text}"`;
+      }
+      
+      // void要素の場合は終了タグを持たない
+      if (isVoidElement) {
+        return `${indent}<${tagName}${attributesStr}>`;
       }
       
       let html = `${indent}<${tagName}${attributesStr}>${element.text}`;

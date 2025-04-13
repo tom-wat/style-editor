@@ -55,13 +55,41 @@ const ElementTree: React.FC<ElementTreeProps> = ({
         }
       });
       
-      // デフォルトのdisplayを設定（指定されていない場合）
-      if (!elementStyle.display) {
+      // HTMLタグの種類に基づいてデフォルトのdisplayを設定
+      const inlineElements = ['span', 'a', 'em', 'strong', 'i', 'b', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'u', 'code'];
+      const inlineBlockElements = ['button', 'input', 'select', 'textarea', 'label', 'img'];
+
+      // displayプロパティが無効化されているかどうかチェック
+      const isDisplayDisabled = (disabledProps || []).includes('display');
+
+      // HTMLタグが有効であり、displayプロパティが無効化されている場合
+      if (element.htmlTagName && !element.hideHtmlTag && isDisplayDisabled) {
+        if (inlineElements.includes(element.htmlTagName)) {
+          elementStyle.display = 'inline';
+        } else if (inlineBlockElements.includes(element.htmlTagName)) {
+          elementStyle.display = 'inline-block';
+        } else {
+          elementStyle.display = 'block';
+        }
+      } 
+      // displayプロパティが指定されておらず、HTMLタグが有効な場合
+      else if (element.htmlTagName && !element.hideHtmlTag && !elementStyle.display) {
+        if (inlineElements.includes(element.htmlTagName)) {
+          elementStyle.display = 'inline';
+        } else if (inlineBlockElements.includes(element.htmlTagName)) {
+          elementStyle.display = 'inline-block';
+        } else {
+          elementStyle.display = 'block';
+        }
+      }
+      // それ以外はデフォルトのdisplayを設定
+      else if (!elementStyle.display) {
         elementStyle.display = 'block';
       }
       
       // 子要素の表示モードを調整
       if (element.children && element.children.length > 0) {
+        // インライン要素では子要素を含めない場合が多いが、子要素がある場合は子もレンダリングする
         if (elementStyle.display === 'block') {
           elementStyle.display = 'flex';
           elementStyle.flexDirection = 'column';
@@ -99,16 +127,15 @@ const ElementTree: React.FC<ElementTreeProps> = ({
         elementClassName = 'ring-2 ring-white ring-opacity-50';
       }
 
-
       // レンダリング要素の作成
       // 実際のHTMLタグに基づいて要素を動的に作成
       const tagName = element.htmlTagName && !element.hideHtmlTag ? element.htmlTagName : 'div';
       
       // 動的にタグをレンダリングするために、React.Elementを作成する
-      const ElementTag = tagName as React.ElementType;
+      const ElementTag = tagName as keyof JSX.IntrinsicElements;
       
       return (
-        <div 
+        <ElementTag 
           key={element.id}
           style={elementStyle}
           onClick={(e: React.MouseEvent<HTMLElement>) => {
@@ -123,7 +150,7 @@ const ElementTree: React.FC<ElementTreeProps> = ({
             renderElements(element.children, level + 1
             )
           }
-        </div>
+        </ElementTag>
       );
     });
   };

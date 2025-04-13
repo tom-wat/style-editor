@@ -187,18 +187,24 @@ export const togglePropertyEnabled = (elements: ElementType[], targetId: number,
       // 有効にする場合は配列からプロパティを削除
       // 無効にする場合は配列にプロパティを追加（重複がなければ）
       let updatedDisabledProperties: string[];
-      const updatedProperties = { ...element.properties };
+      let updatedProperties = { ...element.properties };
 
       if (enabled) {
+        // プロパティを有効にする
         updatedDisabledProperties = disabledProperties.filter(p => p !== property);
       } else {
+        // プロパティを無効にする
         updatedDisabledProperties = disabledProperties.includes(property) 
           ? disabledProperties 
           : [...disabledProperties, property];
+        
+        // displayプロパティが無効化されても、値自体は残しておく
+        // 値の削除は行わず、disabledPropertiesで無効化するだけ
       }
       
       return {
         ...element,
+        properties: updatedProperties,
         disabledProperties: updatedDisabledProperties
       };
     } else if (element.children && element.children.length > 0) {
@@ -244,6 +250,9 @@ export const addParentElement = (
       expanded: true,
       hideElementName: false,
       hideModifiers: true,
+      htmlTagName: 'section', // 親要素にはsectionタグをデフォルトで使用
+      htmlAttributes: {}, // HTMLの属性
+      hideHtmlTag: false, // HTMLタグ設定を初期状態で表示
     };
     
     // 元の要素を新しい親要素に置き換える
@@ -285,6 +294,9 @@ export const addParentElement = (
           expanded: true,
           hideElementName: false,
           hideModifiers: true,
+          htmlTagName: 'section', // 親要素にはsectionタグをデフォルトで使用
+          htmlAttributes: {}, // HTMLの属性
+          hideHtmlTag: false, // HTMLタグ設定を表示
         };
         
         // 子要素を親で置き換える
@@ -359,6 +371,9 @@ export const addNewElement = (
     expanded: true,
     hideElementName: false, // 要素名を初期状態では表示する
     hideModifiers: true, // モディファイアを初期状態では非表示に設定
+    htmlTagName: 'div', // デフォルトのHTMLタグ名
+    htmlAttributes: {}, // HTMLの属性
+    hideHtmlTag: false, // HTMLタグ設定を初期状態で表示に設定
   };
   
   // 親要素内に追加する場合

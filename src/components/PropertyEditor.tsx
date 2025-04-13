@@ -1,11 +1,10 @@
 // src/components/PropertyEditor.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ElementType, generateBEMClassName } from '../utils/bemUtils';
 
 interface PropertyEditorProps {
   blockName: string;
   selectedElement: ElementType;
-  allElements: ElementType[]; // すべての要素の参照を追加
   onUpdateBlockName: (name: string) => void;
   onUpdateElementName: (name: string) => void;
   onUpdateModifiers: (modifierStr: string) => void;
@@ -14,19 +13,11 @@ interface PropertyEditorProps {
   onTogglePropertyEnabled?: (property: string, enabled: boolean) => void;
   onToggleElementName?: (hide: boolean) => void;
   onToggleModifiers?: (hide: boolean) => void;
-  onUpdateHtmlTagName?: (tagName: string) => void;
-  onUpdateHtmlAttribute?: (name: string, value: string) => void;
-  onUpdateHtmlAttributeName?: (oldName: string, newName: string) => void;
-  onDeleteHtmlAttribute?: (name: string) => void;
-  onToggleHtmlTag?: (hide: boolean) => void;
-  onUpdateElementBlockName?: (blockName: string) => void; // 要素固有のブロック名を更新する関数
-  onToggleUseParentBlock?: (useParent: boolean) => void; // 親のブロック名を使用するかどうかを切り替える関数
 }
 
 const PropertyEditor: React.FC<PropertyEditorProps> = ({
   blockName,
   selectedElement,
-  allElements,
   onUpdateBlockName,
   onUpdateElementName,
   onUpdateModifiers,
@@ -34,6 +25,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   onUpdateProperty,
   onTogglePropertyEnabled,
   onToggleElementName,
+  onToggleModifiers
   onToggleModifiers,
   onUpdateHtmlAttribute,
   onDeleteHtmlAttribute,
@@ -42,20 +34,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   onToggleUseParentBlock
 }) => {
   // アコーディオンの開閉状態を管理
-  const [isHtmlPanelOpen, setIsHtmlPanelOpen] = useState<boolean>(false);
   const [isBEMPanelOpen, setIsBEMPanelOpen] = useState<boolean>(false);
-  const [newAttributeName, setNewAttributeName] = useState<string>('');
-  const [newAttributeValue, setNewAttributeValue] = useState<string>('');
-  
-  // 編集中の属性名を管理するための状態
-  const [editingAttributeName, setEditingAttributeName] = useState<{
-    originalName: string;
-    newName: string;
-  } | null>(null);
-  
-  // HTMLタグ名の一時的な入力状態
-  const [tempHtmlTagName, setTempHtmlTagName] = useState<string>(selectedElement.htmlTagName || 'div');
-  
   // カラーピッカー用のプロパティ
   const colorProperties = ['backgroundColor', 'color'];
   
@@ -74,152 +53,12 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   
   // autoを指定できるプロパティ
   const autoProperties = ['width', 'height'];
-  
-  // selectedElementが変更されたときにtempHtmlTagNameを更新
-  useEffect(() => {
-    setTempHtmlTagName(selectedElement.htmlTagName || 'div');
-  }, [selectedElement]);
-
-  // タグ名の変更を処理
-  const handleTagNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTempHtmlTagName(value);
-    // フォーカスが外れたときにのみ更新するため、ここではonUpdateHtmlTagNameを呼ばない
-  };
-
-  // フォーカスが外れたときに空の値はデフォルトに戻し、値を更新する
-  const handleTagNameBlur = () => {
-    if (!tempHtmlTagName.trim()) {
-      setTempHtmlTagName('div');
-    } else {
-      // ここで初めて更新する
-    }
-  };
-
-  // 属性名の編集開始
-  const handleAttributeNameChange = (originalName: string, newName: string) => {
-    setEditingAttributeName({ originalName, newName });
-  };
-
-
 
   return (
     <div className="w-full md:w-80 min-w-80 border rounded-lg p-4 overflow-y-auto sticky top-4 max-h-[calc(100vh-2rem)]">
       <h2 className="text-lg font-semibold mb-2">プロパティ</h2>
       
       <div className="border-b pb-2 mb-3">
-        {/* HTMLタグアコーディオンパネル */}
-        <div className="mb-2">
-          <button
-            className="flex w-full justify-between items-center p-2 bg-gray-100 hover:bg-gray-200 rounded"
-            onClick={() => setIsHtmlPanelOpen(!isHtmlPanelOpen)}
-          >
-            <span className="text-sm font-medium">HTMLタグ設定</span>
-            <svg
-              className={`w-5 h-5 transition-transform ${isHtmlPanelOpen ? 'transform rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          
-          {/* HTMLタグ設定パネルの中身 */}
-          {isHtmlPanelOpen && (
-            <div className="mt-2 p-2 border border-gray-200 rounded">
-              <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="use-html-tag"
-                    checked={!selectedElement.hideHtmlTag}
-                    onChange={(e) => onToggleHtmlTag && onToggleHtmlTag(e.target.checked)}
-                  />
-                  <label htmlFor="use-html-tag" className="text-sm font-medium">タグ名</label>
-                </div>
-                <input
-                  type="text"
-                  value={tempHtmlTagName}
-                  onChange={handleTagNameChange}
-                  onBlur={handleTagNameBlur}
-                  disabled={selectedElement.hideHtmlTag}
-                  className="w-full px-2 py-1 border rounded disabled:bg-gray-100 disabled:text-gray-500"
-                />
-              </div>
-              
-              {/* 属性一覧 */}
-              {!selectedElement.hideHtmlTag && (
-                <div className="mt-3">
-                  <label className="block text-sm font-medium mb-1">属性</label>
-                  <div className="space-y-2 mb-2">
-                    {selectedElement.htmlAttributes && Object.entries(selectedElement.htmlAttributes).map(([name, value]) => (
-                      <div key={name} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={editingAttributeName?.originalName === name 
-                            ? editingAttributeName.newName 
-                            : name}
-                          onChange={(e) => handleAttributeNameChange(name, e.target.value)}
-                          className="w-2/5 px-2 py-1 border rounded"
-                        />
-                        <input
-                          type="text"
-                          value={value}
-                          onChange={(e) => onUpdateHtmlAttribute && onUpdateHtmlAttribute(name, e.target.value)}
-                          className="w-2/5 flex-1 px-2 py-1 border rounded"
-                        />
-                        <button
-                          onClick={() => onDeleteHtmlAttribute && onDeleteHtmlAttribute(name)}
-                          className="text-red-500 hover:text-red-700 px-2"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* 新規属性追加 */}
-                  <div className="flex items-end gap-2 mt-2">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">属性名</label>
-                      <input
-                        type="text"
-                        value={newAttributeName}
-                        onChange={(e) => setNewAttributeName(e.target.value)}
-                        placeholder="id"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">値</label>
-                      <input
-                        type="text"
-                        value={newAttributeValue}
-                        onChange={(e) => setNewAttributeValue(e.target.value)}
-                        placeholder="element-id"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                      />
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (newAttributeName && newAttributeValue) {
-                          setNewAttributeName('');
-                          setNewAttributeValue('');
-                        }
-                      }}
-                      disabled={!newAttributeName || !newAttributeValue}
-                      className="px-3 py-1 bg-blue-500 text-white rounded text-sm disabled:bg-gray-300"
-                    >
-                      追加
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
         {/* BEMアコーディオンパネル */}
         <div className="mb-2">
           <button
@@ -241,60 +80,16 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           {/* アコーディオンの中身 */}
           {isBEMPanelOpen && (
             <div className="mt-2 p-2 border border-gray-200 rounded">
-              {/* グローバルブロック名設定 */}
-              <div className="mb-3 pb-2 border-b border-gray-200">
-                <h4 className="text-sm font-semibold mb-2">グローバルブロック名</h4>
-                <div className="grid grid-cols-[auto,1fr] gap-2 items-center">
-                  <label className="text-sm font-medium">ブロック名：</label>
-                  <input
-                    type="text"
-                    value={blockName}
-                    onChange={(e) => onUpdateBlockName(e.target.value)}
-                    className="w-full px-2 py-1 border rounded"
-                  />
-                </div>
+              <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+                <label className="text-sm font-medium">ブロック名：</label>
+                <input
+                  type="text"
+                  value={blockName}
+                  onChange={(e) => onUpdateBlockName(e.target.value)}
+                  className="w-full px-2 py-1 border rounded"
+                />
               </div>
               
-              {/* 要素固有のブロック名設定 */}
-              <div className="mb-3 pb-2 border-b border-gray-200">
-                <h4 className="text-sm font-semibold mb-2">この要素のブロック名</h4>
-                
-                <div className="flex items-center gap-2 mb-2">
-                  <input
-                    type="checkbox"
-                    id="use-parent-block"
-                    checked={!!selectedElement.useParentBlock}
-                    onChange={(e) => onToggleUseParentBlock && onToggleUseParentBlock(e.target.checked)}
-                    className="mr-1"
-                    disabled={!selectedElement.parentId} // 親要素がない場合は無効化
-                  />
-                  <label htmlFor="use-parent-block" className="text-sm">
-                    親要素のブロック名を使用する
-                  </label>
-                </div>
-                
-                <div className="grid grid-cols-[auto,1fr] gap-2 items-center mb-2">
-                  <label className="text-sm font-medium">要素固有ブロック名：</label>
-                  <input
-                    type="text"
-                    value={selectedElement.blockName || ''}
-                    onChange={(e) => onUpdateElementBlockName && onUpdateElementBlockName(e.target.value)}
-                    className="w-full px-2 py-1 border rounded"
-                    disabled={selectedElement.useParentBlock}
-                    placeholder={selectedElement.useParentBlock ? '親のブロック名を使用します' : 'ブロック名を入力'}
-                  />
-                </div>
-                
-                <div className="text-xs text-gray-500 italic mb-2">
-                  {selectedElement.useParentBlock ? 
-                    '親要素のブロック名が連動して使われます' : 
-                    selectedElement.blockName ? 
-                      'この要素に固有のブロック名が設定されています' : 
-                      'グローバルブロック名が使用されます'}
-                </div>
-              </div>
-              
-              {/* 要素名設定 */}
               <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
                 <div className="flex items-center gap-2">
                   <input
@@ -313,7 +108,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 />
               </div>
               
-              {/* モディファイア設定 */}
               <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
                 <div className="flex items-center gap-2">
                   <input
@@ -332,11 +126,10 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 />
               </div>
               
-              {/* 生成されるクラス名表示 */}
               <div className="mb-2">
                 <label className="block text-sm font-medium mb-1">生成されるクラス名：</label>
                 <div className="text-sm bg-gray-100 p-2 rounded break-words">
-                  {generateBEMClassName(selectedElement, blockName, allElements)}
+                  {generateBEMClassName(selectedElement, blockName)}
                 </div>
               </div>
             </div>
@@ -378,14 +171,12 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                   value={selectedElement.properties[property]}
                   onChange={(e) => onUpdateProperty(property, e.target.value)}
                   className="w-8 h-8 p-0 border"
-                  disabled={(selectedElement.disabledProperties || []).includes(property)}
                 />
                 <input
                   type="text"
                   value={selectedElement.properties[property]}
                   onChange={(e) => onUpdateProperty(property, e.target.value)}
-                  className={`flex-1 px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
-                  disabled={(selectedElement.disabledProperties || []).includes(property)}
+                  className="flex-1 px-2 py-1 border rounded text-sm"
                 />
               </div>
             ) : property in unitProperties ? (
@@ -405,7 +196,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                           }
                         }}
                         className="mr-1"
-                        disabled={(selectedElement.disabledProperties || []).includes(property)}
                       />
                       <label htmlFor={`auto-${property}`} className="text-xs">auto</label>
                     </div>
@@ -418,7 +208,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                       value={parseInt(selectedElement.properties[property]) || 0}
                       onChange={(e) => onUpdateProperty(property, `${e.target.value}${unitProperties[property]}`)}
                       className="flex-1"
-                      disabled={selectedElement.properties[property] === 'auto' || (selectedElement.disabledProperties || []).includes(property)}
+                      disabled={selectedElement.properties[property] === 'auto'}
                     />
                   )}
                 </div>
@@ -426,8 +216,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                   type="text"
                   value={selectedElement.properties[property]}
                   onChange={(e) => onUpdateProperty(property, e.target.value)}
-                  className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
-                  disabled={(selectedElement.disabledProperties || []).includes(property)}
+                  className="w-full px-2 py-1 border rounded text-sm"
                 />
               </div>
             ) : (
@@ -435,8 +224,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 type="text"
                 value={selectedElement.properties[property]}
                 onChange={(e) => onUpdateProperty(property, e.target.value)}
-                className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
-                disabled={(selectedElement.disabledProperties || []).includes(property)}
+                className="w-full px-2 py-1 border rounded text-sm"
               />
             )}
           </div>

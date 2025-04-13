@@ -65,7 +65,7 @@ const Preview: React.FC<PreviewProps> = ({
           </div>
           <div className="text-sm flex items-center overflow-hidden">
             <div className="mr-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-xs">
-              選択中: {selectedElement ? generateBEMClassName(selectedElement, blockName, elements) : 'なし'}
+              選択中: {selectedElement ? generateBEMClassName(selectedElement, blockName) : 'なし'}
             </div>
             <span className="whitespace-nowrap">要素 {selectedIndex + 1}/{countVisibleElements(elements)}</span>
           </div>

@@ -13,7 +13,8 @@ import {
   updateElementProperty,
   addNewElement,
   removeElement,
-  togglePropertyEnabled
+  togglePropertyEnabled,
+  flattenElements
 } from '../utils/elementOperations';
 
 const StyleEditor: React.FC = () => {
@@ -45,6 +46,86 @@ const StyleEditor: React.FC = () => {
       children: [], // 子要素の配列
       parentId: null, // 親要素のID
       expanded: true, // UIでの展開状態
+    },
+    {
+      id: 2,
+      text: 'グリッドコンテナ',
+      elementName: 'grid-container',
+      modifiers: ['secondary'],
+      properties: {
+        width: '400px',
+        backgroundColor: '#e74c3c',
+        color: '#ffffff',
+        padding: '20px',
+        borderRadius: '8px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '10px'
+      },
+      children: [
+        {
+          id: 3,
+          text: 'グリッドアイテム1',
+          elementName: 'grid-item',
+          modifiers: ['first'],
+          properties: {
+            backgroundColor: '#2ecc71',
+            padding: '10px',
+            borderRadius: '4px',
+            textAlign: 'center'
+          },
+          children: [],
+          parentId: 2,
+          expanded: true,
+        },
+        {
+          id: 4,
+          text: 'グリッドアイテム2',
+          elementName: 'grid-item',
+          modifiers: ['second'],
+          properties: {
+            backgroundColor: '#9b59b6',
+            padding: '10px',
+            borderRadius: '4px',
+            textAlign: 'center'
+          },
+          children: [],
+          parentId: 2,
+          expanded: true,
+        },
+        {
+          id: 5,
+          text: 'グリッドアイテム3',
+          elementName: 'grid-item',
+          modifiers: ['third'],
+          properties: {
+            backgroundColor: '#f1c40f',
+            padding: '10px',
+            borderRadius: '4px',
+            textAlign: 'center'
+          },
+          children: [],
+          parentId: 2,
+          expanded: true,
+        },
+        {
+          id: 6,
+          text: 'グリッドアイテム4',
+          elementName: 'grid-item',
+          modifiers: ['fourth'],
+          properties: {
+            backgroundColor: '#1abc9c',
+            padding: '10px',
+            borderRadius: '4px',
+            textAlign: 'center'
+          },
+          children: [],
+          parentId: 2,
+          expanded: true,
+        }
+      ],
+      parentId: null,
+      expanded: true,
     }
   ]);
   
@@ -56,26 +137,16 @@ const StyleEditor: React.FC = () => {
 
   // 要素を追加する関数
   const handleAddElement = (position: 'before' | 'after' | 'child', parentId: number | null = null) => {
-    const newElements = addNewElement(elements, position, selectedElement?.id, parentId);
-    setElements(newElements);
+    const result = addNewElement(elements, position, selectedElement?.id, parentId);
+    setElements(result.elements);
     
-    // 新しい要素を選択 (parent以外の場合)
-    if (position !== 'child') {
-      setTimeout(() => {
-        const newElement = newElements.flat().find(el => el.id > selectedElement.id);
-        if (newElement) {
-          handleSelectElement(newElement.id);
-        }
-      }, 0);
-    } else if (parentId) {
-      // 子要素の場合は親の最後の子要素を選択
-      const parentElement = getSelectedElement(newElements, selectedIndex);
-      if (parentElement && parentElement.children && parentElement.children.length > 0) {
-        const lastChild = parentElement.children[parentElement.children.length - 1];
-        handleSelectElement(lastChild.id);
-      }
-    }
+    // 新しく追加された要素を選択
+    setTimeout(() => {
+      handleSelectElement(result.newElementId);
+    }, 0);
   };
+  
+
 
   // 要素を削除する関数
   const handleRemoveElement = () => {
@@ -123,10 +194,10 @@ const StyleEditor: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-full">
-      <h1 className="text-xl font-bold mb-4">スタイルエディタ (BEM)</h1>
+    <div className="flex flex-col w-full min-h-screen">
+      <h1 className="text-xl font-bold mb-4 sticky top-0 bg-white z-10 py-2">スタイルエディタ (BEM)</h1>
       
-      <div className="flex flex-col md:flex-row gap-4 h-full">
+      <div className="flex flex-col md:flex-row gap-6 min-h-[calc(100vh-4rem)]">
         <Preview 
           elements={elements}
           selectedElement={selectedElement}

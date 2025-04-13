@@ -12,7 +12,7 @@ const CodeDisplay: React.FC<CodeDisplayProps> = ({ elements, blockName }) => {
   const cssCode = generateCssCode(elements, blockName);
 
   return (
-    <div className="mt-4 flex flex-col gap-2">
+    <div className="mt-4 flex flex-col gap-2 overflow-x-auto">
       <div className="border rounded p-2 bg-gray-50">
         <div className="flex justify-between items-center mb-1">
           <h3 className="text-sm font-medium">HTMLコード</h3>

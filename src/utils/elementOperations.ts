@@ -39,6 +39,24 @@ export const getSelectedElement = (elements: ElementType[], selectedIndex: numbe
   return findElementByIndex(elements, validIndex) || elements[0];
 };
 
+// 階層構造の要素をフラットな配列に変換する関数
+export const flattenElements = (elements: ElementType[]): ElementType[] => {
+  let result: ElementType[] = [];
+  
+  const flatten = (items: ElementType[]) => {
+    for (const item of items) {
+      result.push(item);
+      
+      if (item.children && item.children.length > 0) {
+        flatten(item.children);
+      }
+    }
+  };
+  
+  flatten(elements);
+  return result;
+};
+
 // 要素の展開/折りたたみ状態を切り替える関数
 export const toggleElementExpanded = (elements: ElementType[], id: number): ElementType[] => {
   return elements.map(element => {
@@ -53,35 +71,33 @@ export const toggleElementExpanded = (elements: ElementType[], id: number): Elem
 
 // 要素を検索して選択するためのインデックスを計算する関数
 export const findElementIndex = (elements: ElementType[], targetId: number): number => {
+  // 適切な選択インデックスをフラットな配列で探す
   let currentIndex = 0;
+  let foundIndex = -1;
   
-  const findIndex = (elements: ElementType[], targetId: number, startIndex = 0): number => {
-    currentIndex = startIndex;
-    
+  const findIndexInTree = (elements: ElementType[], targetId: number): boolean => {
     for (let i = 0; i < elements.length; i++) {
       const element = elements[i];
       
       if (element.id === targetId) {
-        return currentIndex;
+        foundIndex = currentIndex;
+        return true;
       }
       
       currentIndex++;
       
       if (element.children && element.children.length > 0 && element.expanded) {
-        const childIndex = findIndex(element.children, targetId, 0);
-        
-        if (childIndex !== -1) {
-          return currentIndex - 1 + childIndex;
+        if (findIndexInTree(element.children, targetId)) {
+          return true;
         }
-        
-        currentIndex += countVisibleElements(element.children);
       }
     }
     
-    return -1;
+    return false;
   };
   
-  return findIndex(elements, targetId);
+  findIndexInTree(elements, targetId);
+  return foundIndex;
 };
 
 // 要素のテキストを更新する関数
@@ -199,9 +215,10 @@ export const addNewElement = (
   position: 'before' | 'after' | 'child', 
   selectedId: number | null = null,
   parentId: number | null = null
-): ElementType[] => {
+): { elements: ElementType[], newElementId: number } => {
+  const newElementId = Date.now(); // ユニークなID
   const newElement: ElementType = {
-    id: Date.now(), // ユニークなID
+    id: newElementId,
     text: '新しい要素',
     elementName: `element-${countVisibleElements(elements) + 1}`,
     modifiers: ['secondary'],
@@ -233,7 +250,8 @@ export const addNewElement = (
         if (element.id === parentId) {
           return {
             ...element,
-            children: [...element.children, newChild]
+            children: [...element.children, newChild],
+            expanded: true, // 親要素を展開状態にする
           };
         } else if (element.children && element.children.length > 0) {
           return {
@@ -245,16 +263,25 @@ export const addNewElement = (
       });
     };
     
-    return addChildToParent(elements, parentId, newElement);
+    return { 
+      elements: addChildToParent(elements, parentId, newElement),
+      newElementId: newElementId
+    };
   }
   
   // 選択要素を基準に追加する場合
   if (!selectedId) {
     // 最上位に追加
     if (position === 'before') {
-      return [newElement, ...elements];
+      return { 
+        elements: [newElement, ...elements],
+        newElementId: newElementId
+      };
     } else {
-      return [...elements, newElement];
+      return { 
+        elements: [...elements, newElement],
+        newElementId: newElementId
+      };
     }
   }
   
@@ -291,7 +318,10 @@ export const addNewElement = (
   };
   
   const result = addElementAtLevel(elements, selectedId, newElement, position);
-  return result || elements;
+  return { 
+    elements: result || elements,
+    newElementId: newElementId
+  };
 };
 
 // 要素を削除する関数

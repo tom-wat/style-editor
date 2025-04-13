@@ -1,6 +1,6 @@
 // src/components/Preview.tsx
 import React from 'react';
-import { ElementType, countVisibleElements } from '../utils/bemUtils';
+import { ElementType, countVisibleElements, generateBEMClassName } from '../utils/bemUtils';
 import ElementTree from './ElementTree';
 import CodeDisplay from './CodeDisplay';
 
@@ -26,24 +26,11 @@ const Preview: React.FC<PreviewProps> = ({
   onToggleExpanded
 }) => {
   return (
-    <div className="flex-1 border rounded-lg p-4 flex flex-col">
-      <h2 className="text-lg font-semibold mb-2">プレビュー</h2>
-      <div className="flex-1 border border-gray-200 bg-white rounded-lg overflow-auto relative">
-        <div className="absolute top-2 right-2 z-10 bg-white bg-opacity-70 rounded px-2 py-1 text-xs text-gray-500">
-          実際の要素表示
-        </div>
-        <div className="p-4">
-          <ElementTree 
-            elements={elements}
-            selectedIndex={selectedIndex}
-            onSelectElement={onSelectElement}
-            onToggleExpanded={onToggleExpanded}
-          />
-        </div>
-      </div>
-      <div className="mt-4 flex flex-col gap-2">
-        <div className="flex justify-between">
-          <div className="flex gap-2">
+    <div className="flex-1 w-full border rounded-lg p-4 flex flex-col min-h-[calc(100vh-8rem)] overflow-x-auto">
+      <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
+        <h2 className="text-lg font-semibold">プレビュー</h2>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             <button 
               onClick={() => onAddElement('before')} 
               className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
@@ -70,11 +57,28 @@ const Preview: React.FC<PreviewProps> = ({
               削除
             </button>
           </div>
-          <div className="text-sm flex items-center">
-            <span className="mr-2">選択中: {selectedElement ? selectedElement.text : 'なし'}</span>
-            要素 {selectedIndex + 1}/{countVisibleElements(elements)}
+          <div className="text-sm flex items-center overflow-hidden">
+            <span className="mr-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-xs">
+              選択中: {selectedElement ? generateBEMClassName(selectedElement, blockName) : 'なし'}
+            </span>
+            <span className="whitespace-nowrap">要素 {selectedIndex + 1}/{countVisibleElements(elements)}</span>
           </div>
         </div>
+      </div>
+      <div className="flex-1 border border-gray-200 bg-white rounded-lg overflow-auto relative">
+        <div className="absolute top-2 right-2 z-10 bg-white bg-opacity-70 rounded px-2 py-1 text-xs text-gray-500">
+          実際の要素表示
+        </div>
+        <div className="p-4 overflow-x-auto">
+          <ElementTree 
+            elements={elements}
+            selectedIndex={selectedIndex}
+            onSelectElement={onSelectElement}
+            onToggleExpanded={onToggleExpanded}
+          />
+        </div>
+      </div>
+      <div className="mt-4 flex flex-col gap-2">
         
         <CodeDisplay elements={elements} blockName={blockName} />
       </div>

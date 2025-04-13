@@ -43,7 +43,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   const autoProperties = ['width', 'height'];
 
   return (
-    <div className="w-full md:w-64 border rounded-lg p-4 overflow-y-auto">
+    <div className="w-full md:w-80 min-w-80 border rounded-lg p-4 overflow-y-auto sticky top-4 max-h-[calc(100vh-2rem)]">
       <h2 className="text-lg font-semibold mb-2">プロパティ</h2>
       
       <div className="border-b pb-2 mb-3">

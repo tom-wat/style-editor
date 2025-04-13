@@ -4,7 +4,7 @@ import StyleEditor from './components/StyleEditor'
 
 function App() {
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
+    <div className="w-full p-4 min-h-screen">
       <StyleEditor />
     </div>
   )

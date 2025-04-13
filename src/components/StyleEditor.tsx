@@ -38,6 +38,7 @@ const StyleEditor: React.FC = () => {
         borderRadius: '8px',
         boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
         display: 'flex',
+        flexDirection: 'row', // 初期値をrowに設定
         justifyContent: 'center',
         alignItems: 'center',
         fontFamily: 'Arial, sans-serif',
@@ -46,6 +47,8 @@ const StyleEditor: React.FC = () => {
       children: [], // 子要素の配列
       parentId: null, // 親要素のID
       expanded: true, // UIでの展開状態
+      hideElementName: true, // 要素名を非表示
+      hideModifiers: true, // モディファイアを非表示
     },
     {
       id: 2,
@@ -58,7 +61,8 @@ const StyleEditor: React.FC = () => {
         color: '#ffffff',
         padding: '20px',
         borderRadius: '8px',
-        display: 'grid',
+        display: 'flex',
+        flexDirection: 'row', // 初期値をrowに設定
         gridTemplateColumns: 'repeat(2, 1fr)',
         gap: '10px'
       },
@@ -72,11 +76,15 @@ const StyleEditor: React.FC = () => {
             backgroundColor: '#2ecc71',
             padding: '10px',
             borderRadius: '4px',
-            textAlign: 'center'
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'row' // 初期値をrowに設定
           },
           children: [],
           parentId: 2,
           expanded: true,
+          hideElementName: true,
+          hideModifiers: true,
         },
         {
           id: 4,
@@ -87,11 +95,15 @@ const StyleEditor: React.FC = () => {
             backgroundColor: '#9b59b6',
             padding: '10px',
             borderRadius: '4px',
-            textAlign: 'center'
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'row' // 初期値をrowに設定
           },
           children: [],
           parentId: 2,
           expanded: true,
+          hideElementName: true,
+          hideModifiers: true,
         },
         {
           id: 5,
@@ -102,11 +114,15 @@ const StyleEditor: React.FC = () => {
             backgroundColor: '#f1c40f',
             padding: '10px',
             borderRadius: '4px',
-            textAlign: 'center'
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'row' // 初期値をrowに設定
           },
           children: [],
           parentId: 2,
           expanded: true,
+          hideElementName: true,
+          hideModifiers: true,
         },
         {
           id: 6,
@@ -117,15 +133,21 @@ const StyleEditor: React.FC = () => {
             backgroundColor: '#1abc9c',
             padding: '10px',
             borderRadius: '4px',
-            textAlign: 'center'
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'row' // 初期値をrowに設定
           },
           children: [],
           parentId: 2,
           expanded: true,
+          hideElementName: true,
+          hideModifiers: true,
         }
       ],
       parentId: null,
       expanded: true,
+      hideElementName: true,
+      hideModifiers: true,
     }
   ]);
   
@@ -145,8 +167,6 @@ const StyleEditor: React.FC = () => {
       handleSelectElement(result.newElementId);
     }, 0);
   };
-  
-
 
   // 要素を削除する関数
   const handleRemoveElement = () => {
@@ -193,6 +213,26 @@ const StyleEditor: React.FC = () => {
     setElements(togglePropertyEnabled(elements, selectedElement.id, property, enabled));
   };
 
+  // 要素名の表示/非表示を切り替える関数
+  const handleToggleElementName = (show: boolean) => {
+    setElements(elements.map(element => {
+      if (element.id === selectedElement.id) {
+        return { ...element, hideElementName: !show };
+      }
+      return element;
+    }));
+  };
+
+  // モディファイアの表示/非表示を切り替える関数
+  const handleToggleModifiers = (show: boolean) => {
+    setElements(elements.map(element => {
+      if (element.id === selectedElement.id) {
+        return { ...element, hideModifiers: !show };
+      }
+      return element;
+    }));
+  };
+
   return (
     <div className="flex flex-col w-full min-h-screen">
       <h1 className="text-xl font-bold mb-4 sticky top-0 bg-white z-10 py-2">スタイルエディタ (BEM)</h1>
@@ -218,6 +258,8 @@ const StyleEditor: React.FC = () => {
           onUpdateText={handleUpdateText}
           onUpdateProperty={handleUpdateProperty}
           onTogglePropertyEnabled={handleTogglePropertyEnabled}
+          onToggleElementName={handleToggleElementName}
+          onToggleModifiers={handleToggleModifiers}
         />
       </div>
     </div>

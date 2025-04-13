@@ -11,6 +11,8 @@ interface PropertyEditorProps {
   onUpdateText: (text: string) => void;
   onUpdateProperty: (property: string, value: string) => void;
   onTogglePropertyEnabled?: (property: string, enabled: boolean) => void;
+  onToggleElementName?: (hide: boolean) => void;
+  onToggleModifiers?: (hide: boolean) => void;
 }
 
 const PropertyEditor: React.FC<PropertyEditorProps> = ({
@@ -21,7 +23,9 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   onUpdateModifiers,
   onUpdateText,
   onUpdateProperty,
-  onTogglePropertyEnabled
+  onTogglePropertyEnabled,
+  onToggleElementName,
+  onToggleModifiers
 }) => {
   // カラーピッカー用のプロパティ
   const colorProperties = ['backgroundColor', 'color'];
@@ -47,8 +51,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
       <h2 className="text-lg font-semibold mb-2">プロパティ</h2>
       
       <div className="border-b pb-2 mb-3">
-        <div className="mb-2">
-          <label className="block text-sm font-medium mb-1">ブロック名：</label>
+        <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+          <label className="text-sm font-medium">ブロック名：</label>
           <input
             type="text"
             value={blockName}
@@ -57,8 +61,16 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           />
         </div>
         
-        <div className="mb-2">
-          <label className="block text-sm font-medium mb-1">要素名：</label>
+        <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="hide-element-name"
+              checked={!selectedElement.hideElementName}
+              onChange={(e) => onToggleElementName && onToggleElementName(e.target.checked)}
+            />
+            <label htmlFor="hide-element-name" className="text-sm font-medium">要素名</label>
+          </div>
           <input
             type="text"
             value={selectedElement.elementName || ''}
@@ -67,8 +79,16 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           />
         </div>
         
-        <div className="mb-2">
-          <label className="block text-sm font-medium mb-1">モディファイア（カンマ区切り）：</label>
+        <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="hide-modifiers"
+              checked={!selectedElement.hideModifiers}
+              onChange={(e) => onToggleModifiers && onToggleModifiers(e.target.checked)}
+            />
+            <label htmlFor="hide-modifiers" className="text-sm font-medium">モディファイア</label>
+          </div>
           <input
             type="text"
             value={(selectedElement.modifiers || []).join(', ')}
@@ -84,8 +104,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           </div>
         </div>
         
-        <div className="mb-2">
-          <label className="block text-sm font-medium mb-1">テキスト：</label>
+        <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+          <label className="text-sm font-medium">テキスト：</label>
           <input
             type="text"
             value={selectedElement.text}

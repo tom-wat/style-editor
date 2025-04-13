@@ -8,6 +8,8 @@ export interface ElementType {
   modifiers: string[];
   properties: Record<string, string>;
   disabledProperties?: string[]; // 無効になっているプロパティを管理する配列
+  hideElementName?: boolean; // 要素名を非表示にするフラグ
+  hideModifiers?: boolean; // モディファイアを非表示にするフラグ
   children: ElementType[];
   parentId: number | null;
   expanded: boolean;
@@ -17,11 +19,13 @@ export interface ElementType {
 export const generateBEMClassName = (element: ElementType, blockName: string): string => {
   let className = blockName;
   
-  if (element.elementName) {
+  // チェックボックスがチェックされている場合に要素名を追加しない
+  if (element.elementName && !element.hideElementName) {
     className += `__${element.elementName}`;
   }
   
-  if (element.modifiers && element.modifiers.length > 0) {
+  // チェックボックスがチェックされている場合にモディファイアを追加しない
+  if (element.modifiers && element.modifiers.length > 0 && !element.hideModifiers) {
     const modifierClasses = element.modifiers.map(modifier => `${className}--${modifier}`);
     className = `${className} ${modifierClasses.join(' ')}`;
   }
@@ -74,7 +78,7 @@ export const generateCssCode = (elements: ElementType[], blockName: string): str
       css += `.${className} {\n${cssRules}\n}`;
       
       // モディファイアごとのCSS
-      if (element.modifiers && element.modifiers.length > 0) {
+      if (element.modifiers && element.modifiers.length > 0 && !element.hideModifiers) {
         element.modifiers.forEach(modifier => {
           const modifierClass = `${className}--${modifier}`;
           css += `\n\n.${modifierClass} {\n  /* モディファイア固有のスタイル */\n}`;

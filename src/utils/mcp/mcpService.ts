@@ -47,7 +47,7 @@ export const saveStylesToMCPServer = async (
       throw new Error(`MCPサーバーへのデータ保存に失敗しました: ${response.status} ${response.statusText}`);
     }
     
-    const result = await response.json();
+    // const result = await response.json();
     return { success: true, message: 'スタイルが正常に保存されました' };
   } catch (error) {
     console.error('MCPサーバーにデータを保存できませんでした:', error);

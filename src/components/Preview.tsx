@@ -13,7 +13,6 @@ interface PreviewProps {
   onAddParentElement: () => void;
   onRemoveElement: () => void;
   onSelectElement: (id: number) => void;
-  onToggleExpanded: (id: number) => void;
 }
 
 const Preview: React.FC<PreviewProps> = ({
@@ -24,8 +23,7 @@ const Preview: React.FC<PreviewProps> = ({
   onAddElement,
   onAddParentElement,
   onRemoveElement,
-  onSelectElement,
-  onToggleExpanded
+  onSelectElement  
 }) => {
   return (
     <div className="flex-1 w-full border rounded-lg p-4 flex flex-col min-h-[calc(100vh-8rem)] overflow-x-auto">
@@ -79,7 +77,6 @@ const Preview: React.FC<PreviewProps> = ({
             elements={elements}
             selectedIndex={selectedIndex}
             onSelectElement={onSelectElement}
-            onToggleExpanded={onToggleExpanded}
           />
         </div>
       </div>

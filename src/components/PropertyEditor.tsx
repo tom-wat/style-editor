@@ -35,9 +35,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   onTogglePropertyEnabled,
   onToggleElementName,
   onToggleModifiers,
-  onUpdateHtmlTagName,
   onUpdateHtmlAttribute,
-  onUpdateHtmlAttributeName,
   onDeleteHtmlAttribute,
   onToggleHtmlTag,
   onUpdateElementBlockName,
@@ -93,10 +91,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   const handleTagNameBlur = () => {
     if (!tempHtmlTagName.trim()) {
       setTempHtmlTagName('div');
-      onUpdateHtmlTagName && onUpdateHtmlTagName('div');
     } else {
       // ここで初めて更新する
-      onUpdateHtmlTagName && onUpdateHtmlTagName(tempHtmlTagName);
     }
   };
 
@@ -105,16 +101,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
     setEditingAttributeName({ originalName, newName });
   };
 
-  // 属性名編集のフォーカス外れ時の処理
-  const handleAttributeNameBlur = () => {
-    if (editingAttributeName) {
-      const { originalName, newName } = editingAttributeName;
-      if (newName.trim() && newName !== originalName) {
-        onUpdateHtmlAttributeName && onUpdateHtmlAttributeName(originalName, newName);
-      }
-      setEditingAttributeName(null);
-    }
-  };
+
 
   return (
     <div className="w-full md:w-80 min-w-80 border rounded-lg p-4 overflow-y-auto sticky top-4 max-h-[calc(100vh-2rem)]">
@@ -175,7 +162,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                             ? editingAttributeName.newName 
                             : name}
                           onChange={(e) => handleAttributeNameChange(name, e.target.value)}
-                          onBlur={handleAttributeNameBlur}
                           className="w-2/5 px-2 py-1 border rounded"
                         />
                         <input
@@ -219,7 +205,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                     <button
                       onClick={() => {
                         if (newAttributeName && newAttributeValue) {
-                          onUpdateHtmlAttribute && onUpdateHtmlAttribute(newAttributeName, newAttributeValue);
                           setNewAttributeName('');
                           setNewAttributeValue('');
                         }

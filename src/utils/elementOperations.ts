@@ -4,7 +4,7 @@ import { ElementType, countVisibleElements } from './bemUtils';
 // 選択された要素を取得する関数
 export const getSelectedElement = (elements: ElementType[], selectedIndex: number): ElementType => {
   // フラットな配列での選択インデックスから実際の要素を取得する関数
-  const findElementByIndex = (elements: ElementType[], targetIndex: number, currentIndex = 0) => {
+  const findElementByIndex = (elements: ElementType[], targetIndex: number, currentIndex = 0): ElementType | null => {
     for (let i = 0; i < elements.length; i++) {
       const element = elements[i];
       
@@ -41,7 +41,7 @@ export const getSelectedElement = (elements: ElementType[], selectedIndex: numbe
 
 // 階層構造の要素をフラットな配列に変換する関数
 export const flattenElements = (elements: ElementType[]): ElementType[] => {
-  let result: ElementType[] = [];
+  const result: ElementType[] = [];
   
   const flatten = (items: ElementType[]) => {
     for (const item of items) {
@@ -187,7 +187,7 @@ export const togglePropertyEnabled = (elements: ElementType[], targetId: number,
       // 有効にする場合は配列からプロパティを削除
       // 無効にする場合は配列にプロパティを追加（重複がなければ）
       let updatedDisabledProperties: string[];
-      let updatedProperties = { ...element.properties };
+      const updatedProperties = { ...element.properties };
 
       if (enabled) {
         // プロパティを有効にする
@@ -419,7 +419,7 @@ export const addNewElement = (
   }
   
   // 平面構造で探して追加する関数
-  const addElementAtLevel = (elements: ElementType[], targetId: number, newElement: ElementType, position: 'before' | 'after'): ElementType[] | null => {
+  const addElementAtLevel = (elements: ElementType[], targetId: number, newElement: ElementType, position: 'before' | 'after' | 'child'): ElementType[] | null => {
     for (let i = 0; i < elements.length; i++) {
       if (elements[i].id === targetId) {
         const newElements = [...elements];

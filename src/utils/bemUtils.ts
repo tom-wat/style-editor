@@ -188,7 +188,7 @@ export const countVisibleElements = (elements: ElementType[]): number => {
 };
 
 // コードをクリップボードにコピーする関数
-export const copyToClipboard = (text: string, onSuccess?: () => void, onError?: (err: any) => void): void => {
+export const copyToClipboard = (text: string, onSuccess?: () => void, onError?: (err: string) => void): void => {
   navigator.clipboard.writeText(text)
     .then(() => {
       if (onSuccess) {

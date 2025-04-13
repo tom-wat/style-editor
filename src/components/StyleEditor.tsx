@@ -3,13 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { fetchStylesFromMCPServer, saveStylesToMCPServer, fetchStyleTemplates } from '../utils/mcp/mcpService';
 import { getEndpointUrl, MCP_CONFIG } from '../utils/mcp/mcpConfig';
 
-import { ElementType, countVisibleElements } from '../utils/bemUtils';
+import { ElementType} from '../utils/bemUtils';
 import Preview from './Preview';
 import Toast from './Toast';
 import PropertyEditor from './PropertyEditor';
 import {
   getSelectedElement,
-  toggleElementExpanded,
   findElementIndex,
   updateElementText,
   updateElementName,
@@ -18,7 +17,6 @@ import {
   addNewElement,
   removeElement,
   togglePropertyEnabled,
-  flattenElements,
   addParentElement
 } from '../utils/elementOperations';
 
@@ -218,11 +216,6 @@ const StyleEditor: React.FC = () => {
     setSelectedIndex(0); // 最初の要素を選択
   };
 
-  // 要素の展開/折りたたみを切り替える関数
-  const handleToggleExpanded = (id: number) => {
-    setElements(toggleElementExpanded(elements, id));
-  };
-
   // 要素を選択する関数
   const handleSelectElement = (id: number) => {
     const index = findElementIndex(elements, id);
@@ -353,7 +346,7 @@ const StyleEditor: React.FC = () => {
     const updateElementsRecursively = (elements: ElementType[], targetId: number, name: string): ElementType[] => {
       return elements.map(element => {
         if (element.id === targetId && element.htmlAttributes) {
-          const { [name]: removed, ...restAttributes } = element.htmlAttributes;
+          const { ...restAttributes } = element.htmlAttributes;
           return { 
             ...element, 
             htmlAttributes: restAttributes
@@ -540,7 +533,6 @@ const StyleEditor: React.FC = () => {
           onAddParentElement={handleAddParentElement}
           onRemoveElement={handleRemoveElement}
           onSelectElement={handleSelectElement}
-          onToggleExpanded={handleToggleExpanded}
         />
         
         <PropertyEditor 

@@ -1,5 +1,5 @@
 // src/components/PropertyEditor.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { ElementType, generateBEMClassName } from '../utils/bemUtils';
 
 interface PropertyEditorProps {
@@ -27,6 +27,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   onToggleElementName,
   onToggleModifiers
 }) => {
+  // アコーディオンの開閉状態を管理
+  const [isBEMPanelOpen, setIsBEMPanelOpen] = useState<boolean>(false);
   // カラーピッカー用のプロパティ
   const colorProperties = ['backgroundColor', 'color'];
   
@@ -51,57 +53,81 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
       <h2 className="text-lg font-semibold mb-2">プロパティ</h2>
       
       <div className="border-b pb-2 mb-3">
-        <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
-          <label className="text-sm font-medium">ブロック名：</label>
-          <input
-            type="text"
-            value={blockName}
-            onChange={(e) => onUpdateBlockName(e.target.value)}
-            className="w-full px-2 py-1 border rounded"
-          />
-        </div>
-        
-        <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="hide-element-name"
-              checked={!selectedElement.hideElementName}
-              onChange={(e) => onToggleElementName && onToggleElementName(e.target.checked)}
-            />
-            <label htmlFor="hide-element-name" className="text-sm font-medium">要素名</label>
-          </div>
-          <input
-            type="text"
-            value={selectedElement.elementName || ''}
-            onChange={(e) => onUpdateElementName(e.target.value)}
-            className="w-full px-2 py-1 border rounded"
-          />
-        </div>
-        
-        <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="hide-modifiers"
-              checked={!selectedElement.hideModifiers}
-              onChange={(e) => onToggleModifiers && onToggleModifiers(e.target.checked)}
-            />
-            <label htmlFor="hide-modifiers" className="text-sm font-medium">モディファイア</label>
-          </div>
-          <input
-            type="text"
-            value={(selectedElement.modifiers || []).join(', ')}
-            onChange={(e) => onUpdateModifiers(e.target.value)}
-            className="w-full px-2 py-1 border rounded"
-          />
-        </div>
-        
+        {/* BEMアコーディオンパネル */}
         <div className="mb-2">
-          <label className="block text-sm font-medium mb-1">生成されるクラス名：</label>
-          <div className="text-sm bg-gray-100 p-2 rounded break-words">
-            {generateBEMClassName(selectedElement, blockName)}
-          </div>
+          <button
+            className="flex w-full justify-between items-center p-2 bg-gray-100 hover:bg-gray-200 rounded"
+            onClick={() => setIsBEMPanelOpen(!isBEMPanelOpen)}
+          >
+            <span className="text-sm font-medium">クラス名設定</span>
+            <svg
+              className={`w-5 h-5 transition-transform ${isBEMPanelOpen ? 'transform rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {/* アコーディオンの中身 */}
+          {isBEMPanelOpen && (
+            <div className="mt-2 p-2 border border-gray-200 rounded">
+              <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+                <label className="text-sm font-medium">ブロック名：</label>
+                <input
+                  type="text"
+                  value={blockName}
+                  onChange={(e) => onUpdateBlockName(e.target.value)}
+                  className="w-full px-2 py-1 border rounded"
+                />
+              </div>
+              
+              <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="hide-element-name"
+                    checked={!selectedElement.hideElementName}
+                    onChange={(e) => onToggleElementName && onToggleElementName(e.target.checked)}
+                  />
+                  <label htmlFor="hide-element-name" className="text-sm font-medium">要素名</label>
+                </div>
+                <input
+                  type="text"
+                  value={selectedElement.elementName || ''}
+                  onChange={(e) => onUpdateElementName(e.target.value)}
+                  className="w-full px-2 py-1 border rounded"
+                />
+              </div>
+              
+              <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="hide-modifiers"
+                    checked={!selectedElement.hideModifiers}
+                    onChange={(e) => onToggleModifiers && onToggleModifiers(e.target.checked)}
+                  />
+                  <label htmlFor="hide-modifiers" className="text-sm font-medium">モディファイア</label>
+                </div>
+                <input
+                  type="text"
+                  value={(selectedElement.modifiers || []).join(', ')}
+                  onChange={(e) => onUpdateModifiers(e.target.value)}
+                  className="w-full px-2 py-1 border rounded"
+                />
+              </div>
+              
+              <div className="mb-2">
+                <label className="block text-sm font-medium mb-1">生成されるクラス名：</label>
+                <div className="text-sm bg-gray-100 p-2 rounded break-words">
+                  {generateBEMClassName(selectedElement, blockName)}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="mb-2 grid grid-cols-[auto,1fr] gap-2 items-center">

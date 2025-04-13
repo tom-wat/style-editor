@@ -209,6 +209,116 @@ export const togglePropertyEnabled = (elements: ElementType[], targetId: number,
   });
 };
 
+// 親要素を追加する関数
+export const addParentElement = (
+  elements: ElementType[],
+  targetId: number
+): { elements: ElementType[], newParentId: number } => {
+  const newParentId = Date.now(); // ユニークなID
+
+  // トップレベルの要素に親を追加する場合
+  const topLevelIndex = elements.findIndex(el => el.id === targetId);
+  if (topLevelIndex !== -1) {
+    const targetElement = elements[topLevelIndex];
+    
+    // 新しい親要素を作成
+    const newParent: ElementType = {
+      id: newParentId,
+      text: '親要素',
+      elementName: `parent-${countVisibleElements(elements) + 1}`,
+      modifiers: ['container'],
+      properties: {
+        width: 'auto',
+        height: 'auto',
+        backgroundColor: '#e2f0fb',
+        padding: '10px',
+        borderRadius: '8px',
+        display: 'block',
+        marginTop: '10px',
+        marginBottom: '10px',
+      },
+      children: [{ ...targetElement, parentId: newParentId }],
+      parentId: null,
+      expanded: true,
+      hideElementName: false,
+      hideModifiers: true,
+    };
+    
+    // 元の要素を新しい親要素に置き換える
+    const newElements = [...elements];
+    newElements.splice(topLevelIndex, 1, newParent);
+    
+    return { elements: newElements, newParentId };
+  }
+  
+  // 子要素を親で囲む関数（再帰的）
+  const wrapChildWithParent = (elements: ElementType[], targetId: number): ElementType[] | null => {
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
+      
+      // 直接の子要素で対象を探す
+      const childIndex = element.children.findIndex(child => child.id === targetId);
+      if (childIndex !== -1) {
+        // 対象の子要素
+        const targetChild = element.children[childIndex];
+        
+        // 新しい親要素
+        const newParent: ElementType = {
+          id: newParentId,
+          text: '親要素',
+          elementName: `parent-${countVisibleElements(elements) + 1}`,
+          modifiers: ['container'],
+          properties: {
+            width: 'auto',
+            height: 'auto',
+            backgroundColor: '#e2f0fb',
+            padding: '10px',
+            borderRadius: '8px',
+            display: 'block',
+            marginTop: '10px',
+            marginBottom: '10px',
+          },
+          children: [{ ...targetChild, parentId: newParentId }],
+          parentId: element.id,
+          expanded: true,
+          hideElementName: false,
+          hideModifiers: true,
+        };
+        
+        // 子要素を親で置き換える
+        const newChildren = [...element.children];
+        newChildren.splice(childIndex, 1, newParent);
+        
+        return elements.map(el => {
+          if (el.id === element.id) {
+            return { ...el, children: newChildren };
+          }
+          return el;
+        });
+      }
+      
+      // 子要素の中をさらに探す
+      if (element.children && element.children.length > 0) {
+        const nestedResult = wrapChildWithParent([element], targetId);
+        if (nestedResult) {
+          return elements.map(el => {
+            if (el.id === element.id) {
+              return nestedResult[0];
+            }
+            return el;
+          });
+        }
+      }
+    }
+    
+    return null;
+  };
+  
+  // 再帰的に子要素を探して親で囲む
+  const result = wrapChildWithParent(elements, targetId);
+  return { elements: result || elements, newParentId };
+};
+
 // 新しい要素を追加する関数
 export const addNewElement = (
   elements: ElementType[], 
@@ -217,6 +327,10 @@ export const addNewElement = (
   parentId: number | null = null
 ): { elements: ElementType[], newElementId: number } => {
   const newElementId = Date.now(); // ユニークなID
+  
+  // 要素の背景色を設定（位置によって変更）
+  const backgroundColor = position === 'child' ? '#1f4e84' : '#3498db';
+  
   const newElement: ElementType = {
     id: newElementId,
     text: '新しい要素',
@@ -225,14 +339,14 @@ export const addNewElement = (
     properties: {
       width: 'auto',
       height: 'auto',
-      backgroundColor: '#e74c3c',
+      backgroundColor,
       color: '#ffffff',
       fontSize: '16px',
       padding: '10px',
       borderRadius: '4px',
       marginTop: '10px',
       marginBottom: '10px',
-      display: 'flex',
+      display: 'block',
       justifyContent: 'center',
       alignItems: 'center',
       fontFamily: 'Arial, sans-serif',
@@ -241,6 +355,8 @@ export const addNewElement = (
     children: [],
     parentId: parentId || null,
     expanded: true,
+    hideElementName: false, // 要素名を初期状態では表示する
+    hideModifiers: true, // モディファイアを初期状態では非表示に設定
   };
   
   // 親要素内に追加する場合

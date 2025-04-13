@@ -10,6 +10,7 @@ interface PreviewProps {
   selectedIndex: number;
   blockName: string;
   onAddElement: (position: 'before' | 'after' | 'child', parentId?: number | null) => void;
+  onAddParentElement: () => void;
   onRemoveElement: () => void;
   onSelectElement: (id: number) => void;
   onToggleExpanded: (id: number) => void;
@@ -21,6 +22,7 @@ const Preview: React.FC<PreviewProps> = ({
   selectedIndex,
   blockName,
   onAddElement,
+  onAddParentElement,
   onRemoveElement,
   onSelectElement,
   onToggleExpanded
@@ -47,7 +49,13 @@ const Preview: React.FC<PreviewProps> = ({
               onClick={() => onAddElement('child', selectedElement.id)} 
               className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
             >
-              内部に追加
+              子要素を追加
+            </button>
+            <button 
+              onClick={onAddParentElement} 
+              className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              親要素を追加
             </button>
             <button 
               onClick={onRemoveElement} 
@@ -66,9 +74,6 @@ const Preview: React.FC<PreviewProps> = ({
         </div>
       </div>
       <div className="flex-1 border border-gray-200 bg-white rounded-lg overflow-auto relative">
-        <div className="absolute top-2 right-2 z-10 bg-white bg-opacity-70 rounded px-2 py-1 text-xs text-gray-500">
-          実際の要素表示
-        </div>
         <div className="p-4 overflow-x-auto">
           <ElementTree 
             elements={elements}

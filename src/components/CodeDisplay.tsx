@@ -1,6 +1,7 @@
 // src/components/CodeDisplay.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { ElementType, generateHtmlCode, generateCssCode, copyToClipboard } from '../utils/bemUtils';
+import Toast from './Toast';
 
 interface CodeDisplayProps {
   elements: ElementType[];
@@ -10,6 +11,25 @@ interface CodeDisplayProps {
 const CodeDisplay: React.FC<CodeDisplayProps> = ({ elements, blockName }) => {
   const htmlCode = generateHtmlCode(elements, blockName);
   const cssCode = generateCssCode(elements, blockName);
+  
+  // トースト表示の状態管理
+  const [showToast, setShowToast] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
+
+  // コピー処理実行関数
+  const handleCopy = (code: string, type: string) => {
+    copyToClipboard(
+      code, 
+      () => {
+        setToastMessage(`${type}コードがコピーされました`);
+        setShowToast(true);
+      },
+      (err) => {
+        setToastMessage('コピーに失敗しました');
+        setShowToast(true);
+      }
+    );
+  };
 
   return (
     <div className="mt-4 flex flex-col gap-2 overflow-x-auto">
@@ -17,7 +37,7 @@ const CodeDisplay: React.FC<CodeDisplayProps> = ({ elements, blockName }) => {
         <div className="flex justify-between items-center mb-1">
           <h3 className="text-sm font-medium">HTMLコード</h3>
           <button 
-            onClick={() => copyToClipboard(htmlCode)}
+            onClick={() => handleCopy(htmlCode, 'HTML')}
             className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
           >
             コピー
@@ -32,7 +52,7 @@ const CodeDisplay: React.FC<CodeDisplayProps> = ({ elements, blockName }) => {
         <div className="flex justify-between items-center mb-1">
           <h3 className="text-sm font-medium">CSSコード</h3>
           <button 
-            onClick={() => copyToClipboard(cssCode)}
+            onClick={() => handleCopy(cssCode, 'CSS')}
             className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
           >
             コピー
@@ -42,6 +62,14 @@ const CodeDisplay: React.FC<CodeDisplayProps> = ({ elements, blockName }) => {
           {cssCode}
         </pre>
       </div>
+      
+      {/* トースト通知コンポーネント */}
+      <Toast 
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={2000}
+      />
     </div>
   );
 };

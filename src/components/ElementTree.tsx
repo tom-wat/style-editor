@@ -70,29 +70,54 @@ const ElementTree: React.FC<ElementTreeProps> = ({
         }
       }
       
+      // 選択されたときのアウトライン色を設定する
+      let outlineColor = '';
+      if (isSelected && element.properties.backgroundColor) {
+        // 背景色から色相を抽出して明るくする
+        try {
+          const bgColor = element.properties.backgroundColor;
+          // HEX形式の場合
+          if (bgColor.startsWith('#')) {
+            // 明るいアウトライン色を設定
+            outlineColor = '#add8e6';
+          } else {
+            // それ以外の場合はデフォルトの青色
+            outlineColor = '#add8e6';
+          }
+        } catch (e) {
+          // エラーが発生した場合はデフォルトの青色
+          outlineColor = '#add8e6';
+        }
+      }
+      
       // 親要素から渡された情報を元に、要素のクラス名を設定
-      let elementClassName = isSelected ? 'ring-2 ring-blue-500' : '';
+      let elementClassName = '';
+      
+      // 選択スタイルを適用
+      if (isSelected) {
+        // elementStyleに直接アウトラインを追加
+        elementStyle.outline = `2px solid ${outlineColor}`;
+        elementStyle.outlineOffset = '2px';
+        elementClassName = 'ring-2 ring-white ring-opacity-50';
+      }
 
       return (
-        <div key={element.id}>
-          <div 
-            style={elementStyle}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectElement(element.id);
-            }}
-            className={elementClassName}
-          >
-            {element.text && element.text.length > 0 ? element.text : null}
-            
-            {element.children && element.children.length > 0 && (
-              <div>
-                {renderElements(element.children, level + 1, 
-                  elementStyle.display === 'flex' && elementStyle.flexDirection === 'row'
-                )}
-              </div>
-            )}
-          </div>
+        <div 
+          key={element.id}
+          style={elementStyle}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectElement(element.id);
+          }}
+          className={elementClassName}
+        >
+          {element.text && element.text.length > 0 ? element.text : null}
+          
+          {element.children && element.children.length > 0 && 
+            renderElements(element.children, level + 1, 
+              elementStyle.display === 'flex' && elementStyle.flexDirection === 'row'
+            )
+          }
         </div>
       );
     });

@@ -14,7 +14,8 @@ import {
   addNewElement,
   removeElement,
   togglePropertyEnabled,
-  flattenElements
+  flattenElements,
+  addParentElement
 } from '../utils/elementOperations';
 
 const StyleEditor: React.FC = () => {
@@ -29,15 +30,15 @@ const StyleEditor: React.FC = () => {
       elementName: 'main', // BEMのelement名
       modifiers: ['primary'], // BEMのmodifier名
       properties: {
-        width: '200px',
-        height: '200px',
+        width: 'auto',
+        height: 'auto',
         backgroundColor: '#3498db',
         color: '#ffffff',
         fontSize: '16px',
         padding: '20px',
         borderRadius: '8px',
         boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-        display: 'flex',
+        display: 'block',
         flexDirection: 'row', // 初期値をrowに設定
         justifyContent: 'center',
         alignItems: 'center',
@@ -49,107 +50,9 @@ const StyleEditor: React.FC = () => {
       expanded: true, // UIでの展開状態
       hideElementName: true, // 要素名を非表示
       hideModifiers: true, // モディファイアを非表示
-    },
-    {
-      id: 2,
-      text: 'グリッドコンテナ',
-      elementName: 'grid-container',
-      modifiers: ['secondary'],
-      properties: {
-        width: '400px',
-        backgroundColor: '#e74c3c',
-        color: '#ffffff',
-        padding: '20px',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'row', // 初期値をrowに設定
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '10px'
-      },
-      children: [
-        {
-          id: 3,
-          text: 'グリッドアイテム1',
-          elementName: 'grid-item',
-          modifiers: ['first'],
-          properties: {
-            backgroundColor: '#2ecc71',
-            padding: '10px',
-            borderRadius: '4px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'row' // 初期値をrowに設定
-          },
-          children: [],
-          parentId: 2,
-          expanded: true,
-          hideElementName: true,
-          hideModifiers: true,
-        },
-        {
-          id: 4,
-          text: 'グリッドアイテム2',
-          elementName: 'grid-item',
-          modifiers: ['second'],
-          properties: {
-            backgroundColor: '#9b59b6',
-            padding: '10px',
-            borderRadius: '4px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'row' // 初期値をrowに設定
-          },
-          children: [],
-          parentId: 2,
-          expanded: true,
-          hideElementName: true,
-          hideModifiers: true,
-        },
-        {
-          id: 5,
-          text: 'グリッドアイテム3',
-          elementName: 'grid-item',
-          modifiers: ['third'],
-          properties: {
-            backgroundColor: '#f1c40f',
-            padding: '10px',
-            borderRadius: '4px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'row' // 初期値をrowに設定
-          },
-          children: [],
-          parentId: 2,
-          expanded: true,
-          hideElementName: true,
-          hideModifiers: true,
-        },
-        {
-          id: 6,
-          text: 'グリッドアイテム4',
-          elementName: 'grid-item',
-          modifiers: ['fourth'],
-          properties: {
-            backgroundColor: '#1abc9c',
-            padding: '10px',
-            borderRadius: '4px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'row' // 初期値をrowに設定
-          },
-          children: [],
-          parentId: 2,
-          expanded: true,
-          hideElementName: true,
-          hideModifiers: true,
-        }
-      ],
-      parentId: null,
-      expanded: true,
-      hideElementName: true,
-      hideModifiers: true,
     }
   ]);
+
   
   // 現在選択されている要素のインデックス
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -165,6 +68,17 @@ const StyleEditor: React.FC = () => {
     // 新しく追加された要素を選択
     setTimeout(() => {
       handleSelectElement(result.newElementId);
+    }, 0);
+  };
+
+  // 親要素を追加する関数
+  const handleAddParentElement = () => {
+    const result = addParentElement(elements, selectedElement.id);
+    setElements(result.elements);
+    
+    // 新しく追加された親要素を選択
+    setTimeout(() => {
+      handleSelectElement(result.newParentId);
     }, 0);
   };
 
@@ -215,27 +129,49 @@ const StyleEditor: React.FC = () => {
 
   // 要素名の表示/非表示を切り替える関数
   const handleToggleElementName = (show: boolean) => {
-    setElements(elements.map(element => {
-      if (element.id === selectedElement.id) {
-        return { ...element, hideElementName: !show };
-      }
-      return element;
-    }));
+    // 再帰的に子要素も含めて更新する関数
+    const updateElementsRecursively = (elements: ElementType[], targetId: number, show: boolean): ElementType[] => {
+      return elements.map(element => {
+        if (element.id === targetId) {
+          return { ...element, hideElementName: !show };
+        } 
+        if (element.children && element.children.length > 0) {
+          return { 
+            ...element, 
+            children: updateElementsRecursively(element.children, targetId, show) 
+          };
+        }
+        return element;
+      });
+    };
+    
+    setElements(updateElementsRecursively(elements, selectedElement.id, show));
   };
 
   // モディファイアの表示/非表示を切り替える関数
   const handleToggleModifiers = (show: boolean) => {
-    setElements(elements.map(element => {
-      if (element.id === selectedElement.id) {
-        return { ...element, hideModifiers: !show };
-      }
-      return element;
-    }));
+    // 再帰的に子要素も含めて更新する関数
+    const updateElementsRecursively = (elements: ElementType[], targetId: number, show: boolean): ElementType[] => {
+      return elements.map(element => {
+        if (element.id === targetId) {
+          return { ...element, hideModifiers: !show };
+        } 
+        if (element.children && element.children.length > 0) {
+          return { 
+            ...element, 
+            children: updateElementsRecursively(element.children, targetId, show) 
+          };
+        }
+        return element;
+      });
+    };
+    
+    setElements(updateElementsRecursively(elements, selectedElement.id, show));
   };
 
   return (
     <div className="flex flex-col w-full min-h-screen">
-      <h1 className="text-xl font-bold mb-4 sticky top-0 bg-white z-10 py-2">スタイルエディタ (BEM)</h1>
+      <h1 className="text-xl font-bold mb-4 sticky top-0 bg-white z-10 py-2">スタイルエディタ</h1>
       
       <div className="flex flex-col md:flex-row gap-6 min-h-[calc(100vh-4rem)]">
         <Preview 
@@ -244,6 +180,7 @@ const StyleEditor: React.FC = () => {
           selectedIndex={selectedIndex}
           blockName={blockName}
           onAddElement={handleAddElement}
+          onAddParentElement={handleAddParentElement}
           onRemoveElement={handleRemoveElement}
           onSelectElement={handleSelectElement}
           onToggleExpanded={handleToggleExpanded}

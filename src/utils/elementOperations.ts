@@ -160,13 +160,43 @@ export const updateElementModifiers = (elements: ElementType[], targetId: number
 export const updateElementProperty = (elements: ElementType[], targetId: number, property: string, value: string): ElementType[] => {
   return elements.map(element => {
     if (element.id === targetId) {
-      return {
+      // 選択した要素のプロパティを更新
+      const updatedElement = {
         ...element,
         properties: {
           ...element.properties,
           [property]: value
         }
       };
+      
+      // 子要素と孫要素も同時に再帰的に更新します
+      // これにより、親要素のプロパティを変更した際に子要素や孫要素にUIが反映されます
+      if (updatedElement.children && updatedElement.children.length > 0) {
+        // すべての子要素とその子孫のプロパティも同様に更新
+        const updateChildrenRecursively = (children: ElementType[]): ElementType[] => {
+          return children.map(child => {
+            const updatedChild = {
+              ...child,
+              properties: {
+                ...child.properties,
+                [property]: value
+              }
+            };
+            
+            // 孫要素も同様に更新していく
+            if (updatedChild.children && updatedChild.children.length > 0) {
+              updatedChild.children = updateChildrenRecursively(updatedChild.children);
+            }
+            
+            return updatedChild;
+          });
+        };
+        
+        // すべての子要素を再帰的に更新
+        updatedElement.children = updateChildrenRecursively(updatedElement.children);
+      }
+      
+      return updatedElement;
     } else if (element.children && element.children.length > 0) {
       return {
         ...element,
@@ -202,11 +232,50 @@ export const togglePropertyEnabled = (elements: ElementType[], targetId: number,
         // 値の削除は行わず、disabledPropertiesで無効化するだけ
       }
       
-      return {
+      // 対象要素を更新
+      const updatedElement = {
         ...element,
         properties: updatedProperties,
         disabledProperties: updatedDisabledProperties
       };
+      
+      // 子要素と孫要素も同様に更新
+      if (updatedElement.children && updatedElement.children.length > 0) {
+        // すべての子要素とその子孫のプロパティも同様に更新
+        const updateChildrenRecursively = (children: ElementType[]): ElementType[] => {
+          return children.map(child => {
+            const childDisabledProperties = child.disabledProperties || [];
+            let updatedChildDisabledProperties: string[];
+            
+            if (enabled) {
+              // プロパティを有効にする
+              updatedChildDisabledProperties = childDisabledProperties.filter(p => p !== property);
+            } else {
+              // プロパティを無効にする
+              updatedChildDisabledProperties = childDisabledProperties.includes(property) 
+                ? childDisabledProperties 
+                : [...childDisabledProperties, property];
+            }
+            
+            const updatedChild = {
+              ...child,
+              disabledProperties: updatedChildDisabledProperties
+            };
+            
+            // 孫要素も同様に更新していく
+            if (updatedChild.children && updatedChild.children.length > 0) {
+              updatedChild.children = updateChildrenRecursively(updatedChild.children);
+            }
+            
+            return updatedChild;
+          });
+        };
+        
+        // すべての子要素を再帰的に更新
+        updatedElement.children = updateChildrenRecursively(updatedElement.children);
+      }
+      
+      return updatedElement;
     } else if (element.children && element.children.length > 0) {
       return {
         ...element,
@@ -224,6 +293,21 @@ export const addParentElement = (
 ): { elements: ElementType[], newParentId: number } => {
   const newParentId = Date.now(); // ユニークなID
 
+  // メイン要素のプロパティを参考にする
+  const mainElement = elements.length > 0 ? elements[0] : null;
+  const mainElementProperties = mainElement ? { ...mainElement.properties } : {};
+  
+  // 親要素用にプロパティを上書きする
+  const parentProperties = {
+    ...mainElementProperties,
+    backgroundColor: '#e2f0fb',
+    padding: '10px',
+    borderRadius: '8px',
+    display: 'block',
+    marginTop: '10px',
+    marginBottom: '10px',
+  };
+
   // トップレベルの要素に親を追加する場合
   const topLevelIndex = elements.findIndex(el => el.id === targetId);
   if (topLevelIndex !== -1) {
@@ -235,16 +319,7 @@ export const addParentElement = (
       text: '親要素',
       elementName: `parent-${countVisibleElements(elements) + 1}`,
       modifiers: ['container'],
-      properties: {
-        width: 'auto',
-        height: 'auto',
-        backgroundColor: '#e2f0fb',
-        padding: '10px',
-        borderRadius: '8px',
-        display: 'block',
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
+      properties: parentProperties,
       children: [{ ...targetElement, parentId: newParentId }],
       parentId: null,
       expanded: true,
@@ -253,6 +328,8 @@ export const addParentElement = (
       htmlTagName: 'section', // 親要素にはsectionタグをデフォルトで使用
       htmlAttributes: {}, // HTMLの属性
       hideHtmlTag: false, // HTMLタグ設定を初期状態で表示
+      // メイン要素の無効プロパティを引き継ぐ
+      disabledProperties: mainElement?.disabledProperties ? [...mainElement.disabledProperties] : []
     };
     
     // 元の要素を新しい親要素に置き換える
@@ -279,16 +356,7 @@ export const addParentElement = (
           text: '親要素',
           elementName: `parent-${countVisibleElements(elements) + 1}`,
           modifiers: ['container'],
-          properties: {
-            width: 'auto',
-            height: 'auto',
-            backgroundColor: '#e2f0fb',
-            padding: '10px',
-            borderRadius: '8px',
-            display: 'block',
-            marginTop: '10px',
-            marginBottom: '10px',
-          },
+          properties: parentProperties,
           children: [{ ...targetChild, parentId: newParentId }],
           parentId: element.id,
           expanded: true,
@@ -297,6 +365,8 @@ export const addParentElement = (
           htmlTagName: 'section', // 親要素にはsectionタグをデフォルトで使用
           htmlAttributes: {}, // HTMLの属性
           hideHtmlTag: false, // HTMLタグ設定を表示
+          // メイン要素の無効プロパティを引き継ぐ
+          disabledProperties: mainElement?.disabledProperties ? [...mainElement.disabledProperties] : []
         };
         
         // 子要素を親で置き換える
@@ -345,27 +415,31 @@ export const addNewElement = (
   // 要素の背景色を設定（位置によって変更）
   const backgroundColor = position === 'child' ? '#1f4e84' : '#3498db';
   
+  // メイン要素のプロパティを参考にする
+  // 最初の要素のプロパティと同じものをコピーする
+  const mainElement = elements.length > 0 ? elements[0] : null;
+  const mainElementProperties = mainElement ? { ...mainElement.properties } : {};
+  
+  // 背景色を位置に合わせて上書き
+  const properties = {
+    ...mainElementProperties,
+    backgroundColor,
+    color: '#ffffff',
+    fontSize: '16px',
+    padding: '10px',
+    borderRadius: '4px',
+    marginTop: '10px',
+    marginBottom: '10px',
+    display: 'block',
+    position: parentId ? 'relative' : 'relative', // 子要素には相対位置
+  };
+  
   const newElement: ElementType = {
     id: newElementId,
     text: '新しい要素',
     elementName: `element-${countVisibleElements(elements) + 1}`,
     modifiers: ['secondary'],
-    properties: {
-      width: 'auto',
-      height: 'auto',
-      backgroundColor,
-      color: '#ffffff',
-      fontSize: '16px',
-      padding: '10px',
-      borderRadius: '4px',
-      marginTop: '10px',
-      marginBottom: '10px',
-      display: 'block',
-      justifyContent: 'center',
-      alignItems: 'center',
-      fontFamily: 'Arial, sans-serif',
-      position: parentId ? 'relative' : 'relative', // 子要素には相対位置
-    },
+    properties,
     children: [],
     parentId: parentId || null,
     expanded: true,
@@ -374,6 +448,8 @@ export const addNewElement = (
     htmlTagName: 'div', // デフォルトのHTMLタグ名
     htmlAttributes: {}, // HTMLの属性
     hideHtmlTag: false, // HTMLタグ設定を初期状態で表示に設定
+    // メイン要素の無効プロパティを引き継ぐ
+    disabledProperties: mainElement?.disabledProperties ? [...mainElement.disabledProperties] : []
   };
   
   // 親要素内に追加する場合

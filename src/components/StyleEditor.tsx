@@ -31,18 +31,35 @@ const StyleEditor: React.FC = () => {
       properties: {
         width: 'auto',
         height: 'auto',
+        'max-width': '100%',
+        'max-height': '100%',
         backgroundColor: '#3498db',
         color: '#ffffff',
         fontSize: '16px',
         padding: '20px',
+        'padding-inline-start': '20px',
+        'padding-inline-end': '20px',
+        'padding-block-start': '20px',
+        'padding-block-end': '20px',
         borderRadius: '8px',
+        border: '1px solid #2980b9',
+        borderWidth: '1px',
+        borderStyle: 'solid',
         boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
         display: 'block',
+        position: 'relative',
+        overflow: 'hidden',
+        opacity: '1',
+        transform: 'scale(1)',
         flexDirection: 'row', // 初期値をrowに設定
         justifyContent: 'center',
         alignItems: 'center',
         fontFamily: 'Arial, sans-serif',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        marginTop: '10px',
+        marginBottom: '10px',
+        marginLeft: '10px',
+        marginRight: '10px'
       },
       children: [], // 子要素の配列
       parentId: null, // 親要素のID
@@ -52,6 +69,16 @@ const StyleEditor: React.FC = () => {
       htmlTagName: 'div', // デフォルトのHTMLタグ名
       htmlAttributes: {}, // HTML属性
       hideHtmlTag: false, // HTMLタグ設定を表示
+      disabledProperties: [
+        'width', 'height', 'max-width', 'max-height',
+        'backgroundColor', 'color', 'borderColor',
+        'fontSize', 'fontFamily', 'fontWeight', 'lineHeight', 'textAlign', 'textDecoration',
+        'padding', 'padding-inline-start', 'padding-inline-end', 'padding-block-start', 'padding-block-end',
+        'marginTop', 'marginBottom', 'marginLeft', 'marginRight',
+        'border', 'borderRadius', 'borderWidth', 'borderStyle',
+        'boxShadow', 'display', 'position', 'overflow', 'opacity', 'transform',
+        'flexDirection', 'justifyContent', 'alignItems', 'transition'
+      ],
     }
   ]);
 

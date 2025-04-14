@@ -57,24 +57,88 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   // HTMLタグ名の一時的な入力状態
   const [tempHtmlTagName, setTempHtmlTagName] = useState<string>(selectedElement.htmlTagName || 'div');
   
+  // プロパティをカテゴリに分類
+  const propertyCategories = {
+    font: {
+      title: 'フォント',
+      properties: ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'textAlign', 'textDecoration']
+    },
+    color: {
+      title: 'カラー',
+      properties: ['color', 'backgroundColor', 'borderColor']
+    },
+    dimension: {
+      title: '幅と高さ',
+      properties: ['width', 'height', 'max-width', 'max-height']
+    },
+    padding: {
+      title: 'パディング',
+      properties: ['padding', 'padding-inline-start', 'padding-inline-end', 'padding-block-start', 'padding-block-end']
+    },
+    margin: {
+      title: 'マージン',
+      properties: ['marginTop', 'marginBottom', 'marginLeft', 'marginRight']
+    },
+    display: {
+      title: 'ディスプレイ',
+      properties: ['display']
+    },
+    border: {
+      title: 'ボーダー',
+      properties: ['border', 'borderRadius', 'borderWidth', 'borderStyle']
+    },
+    other: {
+      title: 'その他',
+      properties: ['position', 'overflow', 'opacity', 'boxShadow', 'transform']
+    }
+  };
+  
+  // カテゴリの開閉状態を管理
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
+    font: false,
+    color: false,
+    dimension: false,
+    padding: false,
+    margin: false,
+    display: false,
+    border: false,
+    other: false,
+    uncategorized: false
+  });
+
   // カラーピッカー用のプロパティ
-  const colorProperties = ['backgroundColor', 'color'];
+  const colorProperties = ['backgroundColor', 'color', 'borderColor'];
   
   // 数値+単位用のプロパティとその単位
   const unitProperties: Record<string, string> = {
     width: 'px',
     height: 'px',
+    'max-width': 'px',
+    'max-height': 'px',
     fontSize: 'px',
     padding: 'px',
+    'padding-inline-start': 'px',
+    'padding-inline-end': 'px',
+    'padding-block-start': 'px',
+    'padding-block-end': 'px',
     borderRadius: 'px',
     marginTop: 'px',
     marginBottom: 'px',
     marginLeft: 'px',
-    marginRight: 'px'
+    marginRight: 'px',
+    borderWidth: 'px'
   };
   
   // autoを指定できるプロパティ
-  const autoProperties = ['width', 'height'];
+  const autoProperties = ['width', 'height', 'max-width', 'max-height'];
+
+  // カテゴリの開閉を切り替える関数
+  const toggleCategory = (category: string) => {
+    setOpenCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
   
   // selectedElementが変更されたときにtempHtmlTagNameを更新
   useEffect(() => {
@@ -121,7 +185,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
 
   return (
     <div className="w-full md:w-80 min-w-80 border rounded-lg p-4 overflow-y-auto sticky top-4 max-h-[calc(100vh-2rem)]">
-      <h2 className="text-lg font-semibold mb-2">プロパティ</h2>
+      <h2 className="text-lg font-semibold mb-2">要素</h2>
       
       <div className="border-b pb-2 mb-3">
         {/* HTMLタグアコーディオンパネル */}
@@ -373,92 +437,250 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
       </div>
       
       <div className="space-y-3">
-        <h3 className="text-sm font-medium">スタイルプロパティ</h3>
-        {Object.keys(selectedElement.properties).map((property) => (
-          <div key={property} className="space-y-1">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id={`property-enabled-${property}`}
-                checked={!(selectedElement.disabledProperties || []).includes(property)}
-                onChange={(e) => onTogglePropertyEnabled && onTogglePropertyEnabled(property, e.target.checked)}
-                className="mr-1"
-              />
-              <label className="block text-sm font-medium" htmlFor={`property-enabled-${property}`}>
-                {property}:
-              </label>
-            </div>
-            
-            {colorProperties.includes(property) ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={selectedElement.properties[property]}
-                  onChange={(e) => onUpdateProperty(property, e.target.value)}
-                  className="w-8 h-8 p-0 border"
-                  disabled={(selectedElement.disabledProperties || []).includes(property)}
-                />
-                <input
-                  type="text"
-                  value={selectedElement.properties[property]}
-                  onChange={(e) => onUpdateProperty(property, e.target.value)}
-                  className={`flex-1 px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
-                  disabled={(selectedElement.disabledProperties || []).includes(property)}
-                />
-              </div>
-            ) : property in unitProperties ? (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  {autoProperties.includes(property) && (
-                    <div className="flex items-center mr-2">
-                      <input
-                        type="checkbox"
-                        id={`auto-${property}`}
-                        checked={selectedElement.properties[property] === 'auto'}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            onUpdateProperty(property, 'auto');
-                          } else {
-                            onUpdateProperty(property, `100${unitProperties[property]}`);
-                          }
-                        }}
-                        className="mr-1"
-                        disabled={(selectedElement.disabledProperties || []).includes(property)}
-                      />
-                      <label htmlFor={`auto-${property}`} className="text-xs">auto</label>
+        <h3 className="text-sm font-medium">プロパティ</h3>
+        
+        {/* カテゴリ別のプロパティ表示 */}
+        {Object.entries(propertyCategories).map(([categoryKey, category]) => {
+          // カテゴリに含まれるプロパティのうち、selectedElementに存在するもののみをフィルタリング
+          const availableProperties = category.properties.filter(prop => 
+            prop in selectedElement.properties
+          );
+          
+          // 利用可能なプロパティがない場合はそのカテゴリを表示しない
+          if (availableProperties.length === 0) return null;
+          
+          return (
+            <div key={categoryKey} className="mb-4">
+              {/* カテゴリのアコーディオンヘッダー */}
+              <button
+                className="flex w-full justify-between items-center p-2 bg-gray-100 hover:bg-gray-200 rounded mb-2"
+                onClick={() => toggleCategory(categoryKey)}
+              >
+                <span className="text-sm font-medium">{category.title}</span>
+                <svg
+                  className={`w-5 h-5 transition-transform ${openCategories[categoryKey] ? 'transform rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* カテゴリの内容 */}
+              {openCategories[categoryKey] && (
+                <div className="pl-2 space-y-3 border-l-2 border-gray-200">
+                  {availableProperties.map(property => (
+                    <div key={property} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`property-enabled-${property}`}
+                          checked={!(selectedElement.disabledProperties || []).includes(property)}
+                          onChange={(e) => onTogglePropertyEnabled && onTogglePropertyEnabled(property, e.target.checked)}
+                          className="mr-1"
+                        />
+                        <label className="block text-sm font-medium" htmlFor={`property-enabled-${property}`}>
+                          {property}:
+                        </label>
+                      </div>
+                      
+                      {colorProperties.includes(property) ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={selectedElement.properties[property]}
+                            onChange={(e) => onUpdateProperty(property, e.target.value)}
+                            className="w-8 h-8 p-0 border"
+                            disabled={(selectedElement.disabledProperties || []).includes(property)}
+                          />
+                          <input
+                            type="text"
+                            value={selectedElement.properties[property]}
+                            onChange={(e) => onUpdateProperty(property, e.target.value)}
+                            className={`flex-1 px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
+                            disabled={(selectedElement.disabledProperties || []).includes(property)}
+                          />
+                        </div>
+                      ) : property in unitProperties ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            {autoProperties.includes(property) && (
+                              <div className="flex items-center mr-2">
+                                <input
+                                  type="checkbox"
+                                  id={`auto-${property}`}
+                                  checked={selectedElement.properties[property] === 'auto'}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      onUpdateProperty(property, 'auto');
+                                    } else {
+                                      onUpdateProperty(property, `100${unitProperties[property]}`);
+                                    }
+                                  }}
+                                  className="mr-1"
+                                  disabled={(selectedElement.disabledProperties || []).includes(property)}
+                                />
+                                <label htmlFor={`auto-${property}`} className="text-xs">auto</label>
+                              </div>
+                            )}
+                            {selectedElement.properties[property] !== 'auto' && (
+                              <input
+                                type="range"
+                                min="0"
+                                max="300"
+                                value={parseInt(selectedElement.properties[property]) || 0}
+                                onChange={(e) => onUpdateProperty(property, `${e.target.value}${unitProperties[property]}`)}
+                                className="flex-1"
+                                disabled={selectedElement.properties[property] === 'auto' || (selectedElement.disabledProperties || []).includes(property)}
+                              />
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            value={selectedElement.properties[property]}
+                            onChange={(e) => onUpdateProperty(property, e.target.value)}
+                            className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
+                            disabled={(selectedElement.disabledProperties || []).includes(property)}
+                          />
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={selectedElement.properties[property]}
+                          onChange={(e) => onUpdateProperty(property, e.target.value)}
+                          className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
+                          disabled={(selectedElement.disabledProperties || []).includes(property)}
+                        />
+                      )}
                     </div>
-                  )}
-                  {selectedElement.properties[property] !== 'auto' && (
-                    <input
-                      type="range"
-                      min="0"
-                      max="300"
-                      value={parseInt(selectedElement.properties[property]) || 0}
-                      onChange={(e) => onUpdateProperty(property, `${e.target.value}${unitProperties[property]}`)}
-                      className="flex-1"
-                      disabled={selectedElement.properties[property] === 'auto' || (selectedElement.disabledProperties || []).includes(property)}
-                    />
-                  )}
+                  ))}
                 </div>
-                <input
-                  type="text"
-                  value={selectedElement.properties[property]}
-                  onChange={(e) => onUpdateProperty(property, e.target.value)}
-                  className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
-                  disabled={(selectedElement.disabledProperties || []).includes(property)}
-                />
-              </div>
-            ) : (
-              <input
-                type="text"
-                value={selectedElement.properties[property]}
-                onChange={(e) => onUpdateProperty(property, e.target.value)}
-                className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
-                disabled={(selectedElement.disabledProperties || []).includes(property)}
-              />
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
+        
+        {/* カテゴリに属さないプロパティを「その他」として表示 */}
+        {(() => {
+          const allCategorizedProperties = Object.values(propertyCategories).flatMap(category => category.properties);
+          const uncategorizedProperties = Object.keys(selectedElement.properties).filter(
+            property => !allCategorizedProperties.includes(property)
+          );
+          
+          if (uncategorizedProperties.length === 0) return null;
+          
+          return (
+            <div className="mb-4">
+              <button
+                className="flex w-full justify-between items-center p-2 bg-gray-100 hover:bg-gray-200 rounded mb-2"
+                onClick={() => toggleCategory('uncategorized')}
+              >
+                <span className="text-sm font-medium">未分類プロパティ</span>
+                <svg
+                  className={`w-5 h-5 transition-transform ${openCategories['uncategorized'] ? 'transform rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {openCategories['uncategorized'] && (
+                <div className="pl-2 space-y-3 border-l-2 border-gray-200">
+                  {uncategorizedProperties.map(property => (
+                    <div key={property} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`property-enabled-${property}`}
+                          checked={!(selectedElement.disabledProperties || []).includes(property)}
+                          onChange={(e) => onTogglePropertyEnabled && onTogglePropertyEnabled(property, e.target.checked)}
+                          className="mr-1"
+                        />
+                        <label className="block text-sm font-medium" htmlFor={`property-enabled-${property}`}>
+                          {property}:
+                        </label>
+                      </div>
+                      
+                      {colorProperties.includes(property) ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={selectedElement.properties[property]}
+                            onChange={(e) => onUpdateProperty(property, e.target.value)}
+                            className="w-8 h-8 p-0 border"
+                            disabled={(selectedElement.disabledProperties || []).includes(property)}
+                          />
+                          <input
+                            type="text"
+                            value={selectedElement.properties[property]}
+                            onChange={(e) => onUpdateProperty(property, e.target.value)}
+                            className={`flex-1 px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
+                            disabled={(selectedElement.disabledProperties || []).includes(property)}
+                          />
+                        </div>
+                      ) : property in unitProperties ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            {autoProperties.includes(property) && (
+                              <div className="flex items-center mr-2">
+                                <input
+                                  type="checkbox"
+                                  id={`auto-${property}`}
+                                  checked={selectedElement.properties[property] === 'auto'}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      onUpdateProperty(property, 'auto');
+                                    } else {
+                                      onUpdateProperty(property, `100${unitProperties[property]}`);
+                                    }
+                                  }}
+                                  className="mr-1"
+                                  disabled={(selectedElement.disabledProperties || []).includes(property)}
+                                />
+                                <label htmlFor={`auto-${property}`} className="text-xs">auto</label>
+                              </div>
+                            )}
+                            {selectedElement.properties[property] !== 'auto' && (
+                              <input
+                                type="range"
+                                min="0"
+                                max="300"
+                                value={parseInt(selectedElement.properties[property]) || 0}
+                                onChange={(e) => onUpdateProperty(property, `${e.target.value}${unitProperties[property]}`)}
+                                className="flex-1"
+                                disabled={selectedElement.properties[property] === 'auto' || (selectedElement.disabledProperties || []).includes(property)}
+                              />
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            value={selectedElement.properties[property]}
+                            onChange={(e) => onUpdateProperty(property, e.target.value)}
+                            className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
+                            disabled={(selectedElement.disabledProperties || []).includes(property)}
+                          />
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={selectedElement.properties[property]}
+                          onChange={(e) => onUpdateProperty(property, e.target.value)}
+                          className={`w-full px-2 py-1 border rounded text-sm ${(selectedElement.disabledProperties || []).includes(property) ? 'bg-gray-100 text-gray-500' : ''}`}
+                          disabled={(selectedElement.disabledProperties || []).includes(property)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

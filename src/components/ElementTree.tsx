@@ -142,11 +142,11 @@ const ElementTree: React.FC<ElementTreeProps> = ({
       const isVoidElement = voidElements.includes(tagName);
       
       // void要素の場合は子要素を持てない
-      const children = isVoidElement ? null : [
-        element.text && element.text.length > 0 ? element.text : null,
-        element.children && element.children.length > 0 ? 
-          renderElements(element.children, level + 1) : null
-      ].filter(Boolean); // nullやundefinedを除去
+      // const children = isVoidElement ? null : [
+      //   element.text && element.text.length > 0 ? element.text : null,
+      //   element.children && element.children.length > 0 ? 
+      //     renderElements(element.children, level + 1) : null
+      // ].filter(Boolean); // nullやundefinedを除去
 
       // テキストがある場合、void要素でなければテキストを表示
       // void要素の場合は、alt属性にテキストを設定する（imgタグ用）
